@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医院挂号系统 - 预约确认</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36D399',
+                        accent: '#FF7D00',
+                        neutral: {
+                            100: '#F5F7FA',
+                            200: '#E4E7ED',
+                            300: '#C0C6CF',
+                            800: '#2D3748'
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .step-completed {
+                @apply bg-primary/20 text-primary border-primary;
+            }
+            .step-active {
+                @apply bg-primary text-white border-primary;
+            }
+            .card-shadow {
+                @apply shadow-md hover:shadow-lg transition-all duration-300;
+            }
+            .input-focus {
+                @apply focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none;
+            }
+            .error-message {
+                @apply text-red-500 text-sm mt-1 hidden;
+            }
+        }
+    </style>
+</head>
+<body class="bg-neutral-100 font-inter min-h-screen">
+
+    <!-- 顶部导航栏：用户中心按钮 -->
+    <div class="bg-white shadow-sm mb-4">
+        <div class="container mx-auto px-4 py-3 flex justify-end">
+            <a href="/user_center" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+                <i class="fa fa-user mr-2"></i>用户中心
+            </a>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- 挂号流程步骤导航 -->
+        <div class="flex justify-between mb-10 relative">
+            <div class="absolute top-1/2 left-0 right-0 h-1 bg-neutral-200 -z-10 transform -translate-y-1/2"></div>
+            <div class="step-indicator flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center step-completed border-2">
+                    <i class="fa fa-building-o"></i>
+                </div>
+                <span class="mt-2 text-sm font-medium text-primary">选择科室</span>
+            </div>
+            <div class="step-indicator flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center step-completed border-2">
+                    <i class="fa fa-user-md"></i>
+                </div>
+                <span class="mt-2 text-sm font-medium text-primary">选择医生</span>
+            </div>
+            <div class="step-indicator flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center step-active border-2">
+                    <i class="fa fa-calendar"></i>
+                </div>
+                <span class="mt-2 text-sm font-medium text-white">选择时间</span>
+            </div>
+            <div class="step-indicator flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center step-inactive border-2">
+                    <i class="fa fa-check"></i>
+                </div>
+                <span class="mt-2 text-sm font-medium text-neutral-500">确认挂号</span>
+            </div>
+        </div>
+
+        <!-- 已选择的科室和医生信息 -->
+        <div class="bg-white rounded-xl p-6 card-shadow mb-6">
+            <div class="flex items-start">
+                <div class="bg-primary/10 p-3 rounded-lg mr-4">
+                    <i class="fa fa-building-o text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-neutral-800">已选择科室</h3>
+                    <p class="text-neutral-600"><span class="font-medium">{{ department.name }}</span> - 专注相关疾病诊疗</p>
+                </div>
+            </div>
+            <div class="flex items-start mt-6">
+                <div class="bg-primary/10 p-3 rounded-lg mr-4">
+                    <i class="fa fa-user-md text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-neutral-800">已选择医生</h3>
+                    <div class="flex items-center">
+                        <img src="https://picsum.photos/60/60" alt="医生头像" class="w-12 h-12 rounded-full object-cover mr-3">
+                        <div>
+                            <p class="font-medium text-neutral-800">{{ doctor.name }} <span class="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">待补充职称</span></p>
+                            <p class="text-neutral-600 text-sm">从业{{ doctor.work_years }}年 | 擅长{{ doctor.speciality }}治疗</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 挂号表单主体 -->
+        <div class="bg-white rounded-xl p-6 card-shadow">
+            <h2 class="text-2xl font-bold text-neutral-800 mb-6">
+                <i class="fa fa-calendar text-primary mr-2"></i>选择挂号时间
+            </h2>
+
+            <!-- 时间选择区 -->
+            <div id="time-selection">
+                <div class="mb-6">
+                    <label class="block text-neutral-800 font-medium mb-2">选择日期</label>
+                    <input type="date" id="appointment-date" value="2025-07-05" class="w-full p-3 border border-neutral-300 rounded-lg input-focus" required>
+                    <div id="date-error" class="error-message">请选择预约日期</div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-neutral-800 font-medium mb-2">选择时段</label>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="time-slots">
+                        <button class="time-slot-btn px-4 py-2 border border-neutral-300 rounded-lg text-neutral-800 font-medium hover:bg-primary hover:text-white hover:border-primary transition-colors">08:30</button>
+                        <button class="time-slot-btn px-4 py-2 border border-neutral-300 rounded-lg text-neutral-800 font-medium hover:bg-primary hover:text-white hover:border-primary transition-colors">09:30</button>
+                        <button class="time-slot-btn px-4 py-2 border-2 border-primary bg-primary text-white rounded-lg font-medium">10:30</button>
+                        <button class="time-slot-btn px-4 py-2 border border-neutral-300 rounded-lg text-neutral-800 font-medium hover:bg-primary hover:text-white hover:border-primary transition-colors">14:00</button>
+                        <button class="time-slot-btn px-4 py-2 border border-neutral-300 rounded-lg text-neutral-800 font-medium hover:bg-primary hover:text-white hover:border-primary transition-colors">15:00</button>
+                    </div>
+                    <div id="time-error" class="error-message">请选择预约时段</div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-neutral-800 font-medium mb-2">就诊人信息</label>
+                    <div class="p-4 bg-neutral-100 rounded-lg">
+                        <p class="text-neutral-800 font-medium">姓名: <span>待补充姓名</span></p>
+                        <p class="text-neutral-600 text-sm">电话: 待补充电话 | 身份证: 待补充身份证</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 确认信息区 -->
+            <div class="mt-8 p-4 bg-neutral-100 rounded-lg">
+                <h3 class="text-lg font-semibold text-neutral-800 mb-4">
+                    <i class="fa fa-check text-primary mr-2"></i>即将预约的挂号信息
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p class="text-neutral-600 text-sm">科室</p>
+                        <p class="font-medium text-neutral-800">{{ department.name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-neutral-600 text-sm">医生</p>
+                        <p class="font-medium text-neutral-800">{{ doctor.name }} 待补充职称</p>
+                    </div>
+                    <div>
+                        <p class="text-neutral-600 text-sm">日期</p>
+                        <p class="font-medium text-neutral-800">2025-07-05 (星期六)</p>
+                    </div>
+                    <div>
+                        <p class="text-neutral-600 text-sm">时段</p>
+                        <p class="font-medium text-neutral-800">上午 10:30</p>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-neutral-800 font-medium mb-2">病情描述 (选填)</label>
+                    <textarea id="remark" rows="3" class="w-full p-3 border border-neutral-300 rounded-lg input-focus" placeholder="请简要描述症状，便于医生提前了解病情">最近一周胸闷心悸，偶尔伴随胸痛</textarea>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <div class="text-sm text-neutral-600">
+                        <i class="fa fa-info-circle text-primary mr-1"></i> 挂号费: <span class="font-medium text-primary">¥{{ doctor.consultation_fee }}</span>
+                    </div>
+                    <button id="confirm-btn" type="button" class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center">
+                        <i class="fa fa-check mr-2"></i> 确认挂号
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 隐藏的表单字段 -->
+        <form id="appointment-form" action="/submit_appointment" method="post" style="display: none;">
+            <input type="hidden" name="patient_id" value="{{ session.patient_id }}">
+            <input type="hidden" name="doctor_id" value="{{ doctor.id }}">
+            <input type="hidden" name="department_id" value="{{ department.id }}">
+            <input type="hidden" id="appointment-time-input" name="appointment_time" value="">
+            <input type="hidden" name="remark" value="">
+        </form>
+    </div>
+
+    <script>
+        // 时段选择交互
+        document.querySelectorAll('.time-slot-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.time-slot-btn').forEach(b => {
+                    b.classList.remove('border-2', 'border-primary', 'bg-primary', 'text-white');
+                    b.classList.add('border', 'border-neutral-300', 'text-neutral-800');
+                });
+                this.classList.remove('border', 'border-neutral-300', 'text-neutral-800');
+                this.classList.add('border-2', 'border-primary', 'bg-primary', 'text-white');
+                document.getElementById('time-error').classList.add('hidden');
+            });
+        });
+
+        // 确认挂号按钮点击事件
+        document.getElementById('confirm-btn').addEventListener('click', function() {
+            const dateInput = document.getElementById('appointment-date');
+            const timeSlots = document.querySelectorAll('.time-slot-btn');
+            const selectedTime = document.querySelector('.time-slot-btn.border-primary');
+            const remark = document.getElementById('remark').value;
+            const form = document.getElementById('appointment-form');
+
+            if (!dateInput.value) {
+                document.getElementById('date-error').classList.remove('hidden');
+                return;
+            }
+            if (!selectedTime) {
+                document.getElementById('time-error').classList.remove('hidden');
+                return;
+            }
+
+            const date = dateInput.value;
+            const time = selectedTime.textContent;
+            document.getElementById('appointment-time-input').value = `${date}T${time}:00`;
+            document.querySelector('input[name="remark"]').value = remark;
+
+            form.style.display = 'block';
+            form.submit();
+        });
+    </script>
+</body>
+</html>

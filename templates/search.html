@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>医生搜索</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .main-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 2rem;
+            color: #28a745; /* 绿色 */
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 顶部用户中心按钮 -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
+    <div class="ml-auto">
+        <a href="{{ url_for('user_center') }}" class="btn btn-outline-primary">
+            <i class="fas fa-user"></i> 用户中心
+        </a>
+    </div>
+</nav>
+
+<div class="container main-container shadow p-4 bg-white rounded">
+    <h1 class="main-title">🔍 医生搜索</h1>
+
+    <!-- 搜索表单 -->
+    <form method="post" class="form-inline search-form flex-column align-items-start position-relative">
+        <div class="w-100 mb-2 d-flex position-relative">
+            <!-- 语音识别按钮 -->
+            <button type="button" class="btn btn-outline-secondary mr-2" id="voiceSearchBtn">
+                <i class="fas fa-microphone"></i>
+            </button>
+
+            <div style="flex-grow: 1; position: relative;">
+                <input type="text" name="query" id="queryInput" class="form-control w-100" placeholder="请输入医生姓名或专业领域" value="{{ query }}">
+                <div id="autocomplete-list"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary ml-2"><i class="fas fa-search"></i> 搜索</button>
+            <button class="btn btn-secondary ml-2" type="button" data-toggle="collapse" data-target="#filterOptions">
+                <i class="fas fa-filter"></i> 筛选
+            </button>
+        </div>
+
+        <!-- 筛选区域 -->
+        <div class="collapse w-100" id="filterOptions">
+            <div class="filter-section">
+                <div class="form-group">
+                    <label for="department">科室：</label>
+                    <select name="department" id="department" class="form-control">
+                        <option value="" {% if not selected_department %}selected{% endif %}>不限</option>
+                        {% for dept in departments %}
+                            <option value="{{ dept }}" {% if dept == selected_department %}selected{% endif %}>{{ dept }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group mt-2">
+                    <label for="rating">评分：</label>
+                    <select name="rating" id="rating" class="form-control">
+                        <option value="" {% if not selected_rating %}selected{% endif %}>不限</option>
+                        <option value="5" {% if selected_rating == '5' %}selected{% endif %}>⭐⭐⭐⭐⭐ 5分</option>
+                        <option value="4" {% if selected_rating == '4' %}selected{% endif %}>⭐⭐⭐⭐ 4分</option>
+                        <option value="3" {% if selected_rating == '3' %}selected{% endif %}>⭐⭐⭐ 3分</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-success mt-2"><i class="fas fa-check"></i> 应用筛选</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- 搜索结果 -->
+    {% if results %}
+        <h3>智能推荐结果：</h3>
+        <div class="row">
+            {% for doctor in results %}
+                <div class="col-md-4 mb-4 d-flex">
+                    <div class="card h-100">
+                        <img src="{{ url_for('static', filename=doctor.picture if doctor.picture else '1.png') }}" alt="医生图片" class="card-img-top">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ doctor.name }}</h5>
+                            <p class="card-text"><strong>专长：</strong> {{ doctor.speciality }}</p>
+                            <a href="{{ url_for('doctor_detail', doctor_id=doctor.id) }}" class="btn btn-info mt-auto"><i class="fas fa-info-circle"></i> 查看详情</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if total_pages > 1 %}
+        <nav aria-label="分页导航">
+            <ul class="pagination justify-content-center">
+                {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page - 1 }}{% if query %}&query={{ query }}{% endif %}">上一页</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">上一页</span></li>
+                {% endif %}
+
+                <!-- 只显示当前页 -->
+                <li class="page-item active">
+                    <span class="page-link">{{ page }}</span>
+                </li>
+
+                <!-- 如果存在下一页，显示下一页页码 -->
+                {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page + 1 }}{% if query %}&query={{ query }}{% endif %}">{{ page + 1 }}</a>
+                    </li>
+                {% endif %}
+
+                {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page + 1 }}{% if query %}&query={{ query }}{% endif %}">下一页</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">下一页</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% elif query %}
+        <div class="alert alert-warning text-center">未找到与 "<strong>{{ query }}</strong>" 匹配的医生。</div>
+    {% endif %}
+</div>
+
+<!-- 录音识别状态展示 -->
+<div class="container mt-3">
+    <div id="result" class="text-muted"></div>
+</div>
+
+<!-- 悬浮按钮 -->
+<button id="chatbotButton" class="btn btn-primary rounded-circle shadow" style="position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; z-index: 2000;">
+    <i class="fas fa-robot"></i>
+</button>
+
+<!-- JS库 -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
+
+<!-- 语音识别 + 自动补全 -->
+<script>
+let isRecording = false;
+let audioContext, mediaStream, processor, source, audioData = [];
+
+document.getElementById('voiceSearchBtn').onclick = async () => {
+    if (!isRecording) {
+        audioData = [];
+        audioContext = new AudioContext();
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        source = audioContext.createMediaStreamSource(mediaStream);
+        processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+
+        processor.onaudioprocess = (e) => {
+            const input = e.inputBuffer.getChannelData(0);
+            const downsampled = downsampleBuffer(input, audioContext.sampleRate, 16000);
+            if (downsampled) {
+                audioData.push(encodePCM(downsampled));
+            }
+        };
+
+        isRecording = true;
+        document.getElementById('voiceSearchBtn').classList.add('btn-danger');
+        document.getElementById('voiceSearchBtn').innerHTML = '<i class="fas fa-stop"></i>';
+        document.getElementById('result').textContent = '🎙️ 正在录音，请说话...';
+    } else {
+        processor.disconnect();
+        source.disconnect();
+        mediaStream.getTracks().forEach(track => track.stop());
+        await audioContext.close();
+
+        const pcmBlob = new Blob(audioData, { type: 'application/octet-stream' });
+        const formData = new FormData();
+        formData.append('audio', pcmBlob, 'record.pcm');
+
+        const res = await fetch('/upload_audio', {
+            method: 'POST',
+            body: formData
+        });
+        const json = await res.json();
+        document.getElementById('queryInput').value = json.result || '';
+        document.getElementById('result').textContent = '✅ 识别完成：' + (json.result || '未识别到内容');
+
+        isRecording = false;
+        document.getElementById('voiceSearchBtn').classList.remove('btn-danger');
+        document.getElementById('voiceSearchBtn').innerHTML = '<i class="fas fa-microphone"></i>';
+    }
+};
+
+function downsampleBuffer(buffer, sampleRate, outRate) {
+    if (outRate === sampleRate) return buffer;
+    const ratio = sampleRate / outRate;
+    const length = Math.round(buffer.length / ratio);
+    const result = new Float32Array(length);
+    let offset = 0;
+    for (let i = 0; i < length; i++) {
+        const next = Math.round((i + 1) * ratio);
+        let sum = 0, count = 0;
+        for (let j = offset; j < next && j < buffer.length; j++) {
+            sum += buffer[j];
+            count++;
+        }
+        result[i] = sum / count;
+        offset = next;
+    }
+    return result;
+}
+
+function encodePCM(samples) {
+    const buffer = new ArrayBuffer(samples.length * 2);
+    const view = new DataView(buffer);
+    for (let i = 0; i < samples.length; i++) {
+        let s = Math.max(-1, Math.min(1, samples[i]));
+        s = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        view.setInt16(i * 2, s, true);
+    }
+    return buffer;
+}
+
+// 自动补全
+$(document).ready(function() {
+    $('#queryInput').on('input', function() {
+        const query = $(this).val();
+        if (query.length < 1) {
+            $('#autocomplete-list').empty().hide();
+            return;
+        }
+        $.get('/autocomplete', { query: query }, function(data) {
+            const list = $('#autocomplete-list');
+            list.empty();
+            if (data.suggestions.length > 0) {
+                data.suggestions.forEach(function(item) {
+                    list.append('<div class="autocomplete-item">' + item + '</div>');
+                });
+                list.show();
+            } else {
+                list.hide();
+            }
+        });
+    });
+
+    $(document).on('click', '.autocomplete-item', function() {
+        $('#queryInput').val($(this).text());
+        $('#autocomplete-list').empty().hide();
+    });
+
+    $(document).click(function(e) {
+        if (!$(e.target).closest('#queryInput, #autocomplete-list').length) {
+            $('#autocomplete-list').empty().hide();
+        }
+    });
+
+    $('#chatbotButton').click(function() {
+        window.location.href = "/chatbot";
+    });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>医疗智能助手</title>
+  <style>
+    :root {
+      --user-color: #95ec69;
+      --assistant-color: #e5e5e5;
+      --text-color: #333;
+      --bg-color: #dcdcdc;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background-color: var(--bg-color);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .header {
+      background-color: white;
+      padding: 10px 15px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      font-size: 18px;
+      color: #000;
+    }
+
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message-row {
+      display: flex;
+      align-items: flex-end;
+      max-width: 80%;
+    }
+
+    .message {
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 15px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .user .message {
+      background-color: var(--user-color);
+      color: #000;
+      border-bottom-right-radius: 0;
+    }
+
+    .assistant {
+      align-self: flex-start;
+    }
+
+    .assistant .message {
+      background-color: var(--assistant-color);
+      color: #000;
+      border-bottom-left-radius: 0;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      margin: 0 8px;
+    }
+
+    .api-answer {
+      color: #888;
+      font-size: 12px;
+      margin-left: 44px;
+    }
+
+    form {
+      display: flex;
+      padding: 10px;
+      background-color: white;
+      border-top: 1px solid #ccc;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input[type="submit"] {
+      padding: 10px 20px;
+      margin-left: 10px;
+      border-radius: 20px;
+      border: none;
+      background-color: #07c160;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      .chat-container {
+        padding: 10px;
+      }
+
+      input[type="submit"] {
+        font-size: 14px;
+        padding: 8px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>用户 {{ realname }} 的医疗对话</h1>
+  </div>
+
+  <div class="chat-container" id="chat-history">
+    {% for item in chat_history %}
+      <div class="message-row user">
+        <img class="avatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="用户头像">
+        <div class="message"><strong>{{ realname }}:</strong> {{ item.question }}</div>
+      </div>
+      {% if item.answer == '不知道呢，请查询https://www.doubao.com/，或者询问医生' %}
+        <div class="message-row assistant">
+          <img class="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712107.png" alt="助手头像">
+          <div class="message"><strong>助手:</strong> {{ item.answer }}</div>
+        </div>
+      {% else %}
+        <div class="message-row assistant">
+          <img class="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712107.png" alt="助手头像">
+          <div class="message"><strong>助手:</strong> {{ item.answer }}</div>
+        </div>
+        {% if item.from_api %}
+          <div class="api-answer">当前用户询问过多，久等了</div>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <form method="post">
+    <input type="text" name="question" placeholder="请输入您的医疗问题...">
+    <input type="submit" value="发送">
+  </form>
+
+  <script>
+    // 支持回车提交
+    const input = document.querySelector('input[name="question"]');
+    const form = document.querySelector('form');
+    input.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        form.submit();
+      }
+    });
+
+    // 保持聊天在底部
+    const chatHistory = document.getElementById('chat-history');
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+  </script>
+</body>
+</html>

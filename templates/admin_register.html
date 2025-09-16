@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>远程医疗问诊平台 - 医生注册</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e6f0ff 0%, #f5f9ff 100%);
+        }
+        .background-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            object-fit: cover;
+        }
+        .slide.active {
+            opacity: 1;
+        }
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+        .login-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            max-width: 90%;
+            padding: 40px;
+            position: relative;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 48px;
+            color: #1e88e5;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .login-header h1 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        .alert {
+            padding: 10px;
+            background-color: #ffebee;
+            color: #b71c1c;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .input-icon {
+            position: relative;
+        }
+        .input-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 16px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            border-color: #1e88e5;
+            box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2);
+            outline: none;
+        }
+        .btn-register {
+            width: 100%;
+            padding: 12px;
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn-register:hover {
+            background-color: #0d47a1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+        }
+        .btn-register:active {
+            transform: translateY(0);
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .login-footer a {
+            color: #1e88e5;
+            text-decoration: none;
+        }
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background-color: #43a047;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 15px;
+        }
+        .btn-login:hover {
+            background-color: #2e7d32;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(67, 160, 71, 0.3);
+        }
+        .btn-login:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景图片轮播 -->
+    <div class="background-slider">
+        <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="医疗背景1" class="slide active">
+        <img src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="医疗背景2" class="slide">
+        <img src="https://images.unsplash.com/photo-1581595219315-a187dd40c322?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="医疗背景3" class="slide">
+        <img src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="医疗背景4" class="slide">
+    </div>
+    <div class="background-overlay"></div>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo pulse">
+                <i class="fas fa-user-md"></i>  <!-- 医生图标 -->
+            </div>
+            <h1>远程医疗问诊平台</h1>
+            <p>医生注册系统</p>  <!-- 显示为医生注册 -->
+        </div>
+        <div class="login-body">
+            <div id="error-message" class="alert" style="display: none;"></div>
+            <form id="adminRegisterForm">
+                <div class="form-group input-icon">
+                    <i class="fas fa-user"></i>
+                    <input type="text" class="form-control" id="username" name="username" placeholder="请设置医生用户名" required>
+                </div>
+                <div class="form-group input-icon">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="请设置医生密码" required>
+                </div>
+                <div class="form-group input-icon">
+                    <i class="fas fa-key"></i>
+                    <input type="text" class="form-control" id="verificationCode" name="verificationCode" placeholder="请输入医生注册验证码" required>
+                </div>
+                <button type="submit" class="btn-register">
+                    <i class="fas fa-user-plus mr-2"></i> 注册医生账号  <!-- 按钮文本为注册医生账号 -->
+                </button>
+                <!-- 返回医生登录按钮 -->
+                <button type="button" class="btn-login" id="adminLoginBtn">
+                    <i class="fas fa-sign-in-alt mr-2"></i> 返回医生登录
+                </button>
+            </form>
+        </div>
+        <div class="login-footer">
+            <a href="#" id="terms">查看医生注册条款</a>
+        </div>
+    </div>
+    <script>
+        // 背景图片轮播效果
+        document.addEventListener('DOMContentLoaded', function () {
+            const slides = document.querySelectorAll('.background-slider .slide');
+            let current = 0;
+            function nextSlide() {
+                slides[current].classList.remove('active');
+                current = (current + 1) % slides.length;
+                slides[current].classList.add('active');
+            }
+            setInterval(nextSlide, 6000);
+            slides.forEach(slide => {
+                const image = new Image();
+                image.src = slide.src;
+            });
+        });
+        // 处理医生注册表单提交
+        const adminRegisterForm = document.getElementById('adminRegisterForm');
+        const errorMessage = document.getElementById('error-message');
+        adminRegisterForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            errorMessage.style.display = 'none';
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const verificationCode = document.getElementById('verificationCode').value;
+            if (password.length < 8) {
+                errorMessage.textContent = '医生密码长度不能少于 8 位';
+                errorMessage.style.display = 'block';
+                return;
+            }
+            const submitButton = document.querySelector('.btn-register');
+            const originalText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 注册中...';
+            fetch('/admin/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password,
+                    verification_code: verificationCode
+                })
+            })
+           .then(response => {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+                if (!response.ok) {
+                    throw new Error('服务器错误，请稍后重试');
+                }
+                return response.json();
+            })
+           .then(data => {
+                if (data.status === 200) {
+                    alert('医生注册成功，请登录');
+                    window.location.href = '/login';
+                } else {
+                    errorMessage.textContent = data.message;
+                    errorMessage.style.display = 'block';
+                }
+            })
+           .catch(error => {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+                errorMessage.textContent = error.message;
+                errorMessage.style.display = 'block';
+            });
+        });
+        // 返回医生登录按钮处理
+        const adminLoginBtn = document.getElementById('adminLoginBtn');
+        adminLoginBtn.addEventListener('click', function () {
+            window.location.href = '/login';
+        });
+    </script>
+</body>
+</html>

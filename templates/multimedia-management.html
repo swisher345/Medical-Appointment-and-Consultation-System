@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>多媒体内容管理</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; background: #f3f4f6; }
+    h2 { margin-bottom: 20px; color: #1e293b; }
+    .media-card {
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .media-card img, .media-card video {
+      width: 120px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .media-info {
+      flex-grow: 1;
+      margin-left: 16px;
+    }
+    .media-info h4 {
+      margin: 0 0 4px;
+    }
+    .btn {
+      margin-left: 8px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+    }
+    .edit { background-color: #10b981; }
+    .delete { background-color: #ef4444; }
+  </style>
+</head>
+<body>
+  <h2>多媒体内容管理</h2>
+
+  <div class="media-card">
+    <img src="https://picsum.photos/seed/1/120/80" alt="健康图片">
+    <div class="media-info">
+      <h4>预防流感宣传图</h4>
+      <p>上传时间：2025-06-24</p>
+    </div>
+    <div>
+      <button class="btn edit">编辑</button>
+      <button class="btn delete">删除</button>
+    </div>
+  </div>
+
+  <div class="media-card">
+    <video src="sample-video.mp4" controls></video>
+    <div class="media-info">
+      <h4>健康饮食视频</h4>
+      <p>上传时间：2025-06-20</p>
+    </div>
+    <div>
+      <button class="btn edit">编辑</button>
+      <button class="btn delete">删除</button>
+    </div>
+  </div>
+</body>
+</html>

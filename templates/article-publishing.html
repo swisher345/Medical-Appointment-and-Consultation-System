@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>文章发布管理</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; background: #f9fafb; }
+    h2 { margin-bottom: 20px; color: #1e293b; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    th { background-color: #3b82f6; color: white; }
+    button { margin-right: 8px; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; }
+    .edit { background-color: #10b981; color: white; }
+    .delete { background-color: #ef4444; color: white; }
+  </style>
+</head>
+<body>
+  <h2>文章发布管理</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>标题</th>
+        <th>作者</th>
+        <th>发布时间</th>
+        <th>分类</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>高血压的日常管理</td>
+        <td>王大夫</td>
+        <td>2025-06-10</td>
+        <td>健康知识</td>
+        <td><button class="edit">修改</button><button class="delete">删除</button></td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>

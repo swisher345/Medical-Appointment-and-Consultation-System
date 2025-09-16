@@ -1,0 +1,577 @@
+<!--<!DOCTYPE html>-->
+<!--<html lang="zh-CN">-->
+<!--<head>-->
+<!--  <meta charset="UTF-8" />-->
+<!--  <title>科室信息维护</title>-->
+<!--  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>-->
+<!--  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">-->
+<!--  <style type="text/tailwindcss">-->
+<!--    @theme {-->
+<!--      &#45;&#45;color-primary: #3b82f6;-->
+<!--      &#45;&#45;color-secondary: #10b981;-->
+<!--      &#45;&#45;color-danger: #ef4444;-->
+<!--      &#45;&#45;color-gray: #6b7280;-->
+<!--      &#45;&#45;font-inter: 'Inter', system-ui, sans-serif;-->
+<!--    }-->
+<!--    body {-->
+<!--      font-family: var(&#45;&#45;font-inter);-->
+<!--    }-->
+<!--    .card-shadow {-->
+<!--      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);-->
+<!--    }-->
+<!--    .btn-hover {-->
+<!--      @apply transition-all duration-200 hover:shadow-md;-->
+<!--    }-->
+<!--    .table-row-hover {-->
+<!--      @apply hover:bg-gray-50 transition-colors;-->
+<!--    }-->
+<!--  </style>-->
+<!--</head>-->
+<!--<body class="bg-gray-50 p-6">-->
+<!--  <div class="max-w-3xl mx-auto">-->
+<!--    <h2 class="text-2xl font-bold text-gray-800 mb-6">科室信息维护</h2>-->
+
+<!--    &lt;!&ndash; 搜索 + 新增按钮 &ndash;&gt;-->
+<!--    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">-->
+<!--      <div class="relative flex-grow">-->
+<!--        <input-->
+<!--          type="text"-->
+<!--          class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"-->
+<!--          placeholder="搜索科室名称"-->
+<!--          id="searchInput"-->
+<!--        >-->
+<!--        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>-->
+<!--      </div>-->
+<!--      <button-->
+<!--        id="addBtn"-->
+<!--        class="bg-primary text-white px-5 py-3 rounded-lg btn-hover flex items-center"-->
+<!--      >-->
+<!--        <i class="fas fa-plus mr-2"></i>新增科室-->
+<!--      </button>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; 科室表格 &ndash;&gt;-->
+<!--    <div class="bg-white rounded-xl overflow-hidden card-shadow">-->
+<!--      <table class="w-full">-->
+<!--        <thead>-->
+<!--          <tr class="bg-gray-50">-->
+<!--            <th class="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">科室ID</th>-->
+<!--            <th class="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">名称</th>-->
+<!--            <th class="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">位置</th>-->
+<!--            <th class="px-6 py-4 text-right text-sm font-medium text-gray-500 uppercase tracking-wider">操作</th>-->
+<!--          </tr>-->
+<!--        </thead>-->
+<!--        <tbody id="tableBody">-->
+<!--          &lt;!&ndash; 初始数据将由JavaScript动态渲染 &ndash;&gt;-->
+<!--        </tbody>-->
+<!--      </table>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; 新增/编辑 模态框 &ndash;&gt;-->
+<!--    <div class="modal-mask fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden" id="modalMask">-->
+<!--      <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 transform transition-all">-->
+<!--        <div class="flex justify-between items-center p-5 border-b">-->
+<!--          <h3 class="text-lg font-medium text-gray-900" id="modalTitle">新增科室</h3>-->
+<!--          <button id="closeModal" class="text-gray-400 hover:text-gray-500">-->
+<!--            <i class="fas fa-times text-xl"></i>-->
+<!--          </button>-->
+<!--        </div>-->
+<!--        <div class="p-5">-->
+<!--          <form>-->
+<!--            <div class="mb-4">-->
+<!--              <label for="deptId" class="block text-sm font-medium text-gray-700 mb-1">科室ID</label>-->
+<!--              <input type="text" id="deptId" disabled class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">-->
+<!--            </div>-->
+<!--            <div class="mb-4">-->
+<!--              <label for="deptName" class="block text-sm font-medium text-gray-700 mb-1">科室名称</label>-->
+<!--              <input type="text" id="deptName" placeholder="请输入科室名称" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">-->
+<!--            </div>-->
+<!--            <div class="mb-4">-->
+<!--              <label for="deptLocation" class="block text-sm font-medium text-gray-700 mb-1">位置</label>-->
+<!--              <input type="text" id="deptLocation" placeholder="请输入位置（如：一楼东侧）" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">-->
+<!--            </div>-->
+<!--          </form>-->
+<!--        </div>-->
+<!--        <div class="p-5 border-t flex justify-end">-->
+<!--          <button type="button" id="cancelBtn" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 btn-hover mr-3">-->
+<!--            取消-->
+<!--          </button>-->
+<!--          <button type="button" id="saveBtn" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 btn-hover">-->
+<!--            保存-->
+<!--          </button>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </div>-->
+
+<!--  <script>-->
+<!--    // 从后端获取真实数据-->
+<!--    let departments = {{ departments|tojson }};-->
+<!--    let currentEditId = null; // 标记当前编辑的ID-->
+
+<!--    // DOM 元素-->
+<!--    const modalMask = document.getElementById("modalMask");-->
+<!--    const modalTitle = document.getElementById("modalTitle");-->
+<!--    const deptId = document.getElementById("deptId");-->
+<!--    const deptName = document.getElementById("deptName");-->
+<!--    const deptLocation = document.getElementById("deptLocation");-->
+<!--    const tableBody = document.getElementById("tableBody");-->
+<!--    const searchInput = document.getElementById("searchInput");-->
+<!--    const addBtn = document.getElementById("addBtn");-->
+<!--    const closeModal = document.getElementById("closeModal");-->
+<!--    const cancelBtn = document.getElementById("cancelBtn");-->
+<!--    const saveBtn = document.getElementById("saveBtn");-->
+
+<!--    // 渲染表格（支持传过滤后的数据）-->
+<!--    function renderTable(data = departments) {-->
+<!--      tableBody.innerHTML = "";-->
+<!--      data.forEach(item => {-->
+<!--        const tr = document.createElement("tr");-->
+<!--        tr.className = "table-row-hover";-->
+<!--        tr.innerHTML = `-->
+<!--          <td class="px-6 py-4 text-sm text-gray-900">${item.id}</td>-->
+<!--          <td class="px-6 py-4 text-sm text-gray-900">${item.name}</td>-->
+<!--          <td class="px-6 py-4 text-sm text-gray-900">${item.location}</td>-->
+<!--          <td class="px-6 py-4 text-right text-sm">-->
+<!--            <button class="text-primary hover:text-primary/80 mr-3 edit-btn" onclick="openEditModal(${item.id})">-->
+<!--              <i class="fas fa-edit mr-1"></i>修改-->
+<!--            </button>-->
+<!--            <button class="text-danger hover:text-danger/80 delete-btn" onclick="confirmDelete(${item.id})">-->
+<!--              <i class="fas fa-trash-alt mr-1"></i>删除-->
+<!--            </button>-->
+<!--          </td>-->
+<!--        `;-->
+<!--        tableBody.appendChild(tr);-->
+<!--      });-->
+<!--    }-->
+
+<!--    // 打开新增/编辑模态框-->
+<!--    function openEditModal(id) {-->
+<!--      modalTitle.textContent = "编辑科室";-->
+<!--      currentEditId = id;-->
+<!--      const dept = departments.find(item => item.id === id);-->
+<!--      if (dept) {-->
+<!--        deptId.value = dept.id;-->
+<!--        deptName.value = dept.name;-->
+<!--        deptLocation.value = dept.location;-->
+<!--      }-->
+<!--      modalMask.classList.remove("hidden");-->
+<!--    }-->
+
+<!--    // 打开新增模态框-->
+<!--    addBtn.addEventListener("click", () => {-->
+<!--      modalTitle.textContent = "新增科室";-->
+<!--      currentEditId = null;-->
+<!--      deptId.value = "";-->
+<!--      deptName.value = "";-->
+<!--      deptLocation.value = "";-->
+<!--      modalMask.classList.remove("hidden");-->
+<!--    });-->
+
+<!--    // 关闭模态框-->
+<!--    function closeModalFunc() {-->
+<!--      modalMask.classList.add("hidden");-->
+<!--      // 清空表单-->
+<!--      deptId.value = "";-->
+<!--      deptName.value = "";-->
+<!--      deptLocation.value = "";-->
+<!--    }-->
+
+<!--    closeModal.addEventListener("click", closeModalFunc);-->
+<!--    cancelBtn.addEventListener("click", closeModalFunc);-->
+
+<!--    // 保存（新增/编辑）-->
+<!--    saveBtn.addEventListener("click", () => {-->
+<!--      const name = deptName.value.trim();-->
+<!--      const location = deptLocation.value.trim();-->
+<!--      if (!name || !location) {-->
+<!--        alert("请填写完整信息！");-->
+<!--        return;-->
+<!--      }-->
+
+<!--      if (currentEditId) {-->
+<!--        // 编辑逻辑-->
+<!--        const index = departments.findIndex(item => item.id === currentEditId);-->
+<!--        if (index !== -1) {-->
+<!--          departments[index] = {-->
+<!--            id: currentEditId,-->
+<!--            name,-->
+<!--            location,-->
+<!--          };-->
+<!--          alert("编辑成功！");-->
+<!--        }-->
+<!--      } else {-->
+<!--        // 新增逻辑：简单生成ID（实际由后端返回）-->
+<!--        const newId = departments.length > 0 ? departments[departments.length - 1].id + 1 : 101;-->
+<!--        departments.push({ id: newId, name, location });-->
+<!--        alert("新增成功！");-->
+<!--      }-->
+
+<!--      // 重新渲染表格-->
+<!--      renderTable();-->
+<!--      closeModalFunc();-->
+<!--    });-->
+
+<!--    // 删除确认-->
+<!--    function confirmDelete(id) {-->
+<!--      if (confirm("确定删除该科室吗？")) {-->
+<!--        departments = departments.filter(item => item.id !== id);-->
+<!--        renderTable();-->
+<!--      }-->
+<!--    }-->
+
+<!--    // 搜索功能-->
+<!--    searchInput.addEventListener("input", () => {-->
+<!--      const keyword = searchInput.value.trim().toLowerCase();-->
+<!--      const filtered = departments.filter(item =>-->
+<!--        item.name.toLowerCase().includes(keyword)-->
+<!--      );-->
+<!--      renderTable(filtered);-->
+<!--    });-->
+
+<!--    // 初始渲染表格-->
+<!--    renderTable();-->
+<!--  </script>-->
+<!--</body>-->
+<!--</html>-->
+
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>科室信息维护</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+  <style type="text/tailwindcss">
+    @theme {
+      --color-primary: #3b82f6;
+      --color-secondary: #10b981;
+      --color-danger: #ef4444;
+      --color-gray: #6b7280;
+      --font-inter: 'Inter', system-ui, sans-serif;
+    }
+    body {
+      font-family: var(--font-inter);
+    }
+    .card-shadow {
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+    .btn-hover {
+      @apply transition-all duration-200 hover:shadow-md;
+    }
+    .table-row-hover {
+      @apply hover:bg-gray-50 transition-colors;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 p-6">
+  <div class="max-w-3xl mx-auto">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">科室信息维护</h2>
+
+    <!-- 搜索 + 新增按钮 -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+      <div class="relative flex-grow">
+        <input
+          type="text"
+          class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+          placeholder="搜索科室名称"
+          id="searchInput"
+        >
+        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+      </div>
+      <button
+        id="addBtn"
+        class="bg-primary text-white px-5 py-3 rounded-lg btn-hover flex items-center"
+      >
+        <i class="fas fa-plus mr-2"></i>新增科室
+      </button>
+    </div>
+
+    <!-- 科室表格 -->
+    <div class="bg-white rounded-xl overflow-hidden card-shadow">
+      <table class="w-full">
+        <thead>
+          <tr class="bg-gray-50">
+            <th class="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">一级科室</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">科室名称</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">位置</th>
+            <th class="px-6 py-4 text-right text-sm font-medium text-gray-500 uppercase tracking-wider">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- 初始数据将由JavaScript动态渲染 -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 新增/编辑 模态框 -->
+    <div class="modal-mask fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden" id="modalMask">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 transform transition-all">
+        <div class="flex justify-between items-center p-5 border-b">
+          <h3 class="text-lg font-medium text-gray-900" id="modalTitle">新增科室</h3>
+          <button id="closeModal" class="text-gray-400 hover:text-gray-500">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+        <div class="p-5">
+          <form>
+            <div class="mb-4">
+              <label for="parentId" class="block text-sm font-medium text-gray-700 mb-1">一级科室</label>
+              <select id="parentId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                <option value="">儿科</option>
+              </select>
+            </div>
+            <div class="mb-4">
+              <label for="deptName" class="block text-sm font-medium text-gray-700 mb-1">科室名称</label>
+              <input type="text" id="deptName" placeholder="请输入科室名称" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+            </div>
+            <div class="mb-4">
+              <label for="deptLocation" class="block text-sm font-medium text-gray-700 mb-1">位置</label>
+              <input type="text" id="deptLocation" placeholder="请输入位置（如：一楼东侧）" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+            </div>
+          </form>
+        </div>
+        <div class="p-5 border-t flex justify-end">
+          <button type="button" id="cancelBtn" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 btn-hover mr-3">
+            取消
+          </button>
+          <button type="button" id="saveBtn" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 btn-hover">
+            保存
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 从后端获取真实数据
+    let departments = {{ departments|tojson }};
+    let currentEditId = null; // 标记当前编辑的ID
+
+    // DOM 元素
+    const modalMask = document.getElementById("modalMask");
+    const modalTitle = document.getElementById("modalTitle");
+    const parentId = document.getElementById("parentId");
+    const deptName = document.getElementById("deptName");
+    const deptLocation = document.getElementById("deptLocation");
+    const tableBody = document.getElementById("tableBody");
+    const searchInput = document.getElementById("searchInput");
+    const addBtn = document.getElementById("addBtn");
+    const closeModal = document.getElementById("closeModal");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const saveBtn = document.getElementById("saveBtn");
+
+    // 将ID映射到科室名称的函数
+    function getIdToNameMap() {
+      const map = {};
+      departments.forEach(dept => {
+        map[dept.id] = dept.name;
+      });
+      return map;
+    }
+
+    // 根据parent_id获取一级科室信息
+    function getFirstLevelDeptInfo(dept) {
+      if (dept.parent_id === null || dept.parent_id === "") {
+        return "无"; // 一级科室显示"无"
+      }
+
+      const idToName = getIdToNameMap();
+      return idToName[dept.parent_id] || `未知(ID: ${dept.parent_id})`;
+    }
+
+    // 渲染表格（支持传过滤后的数据）
+    function renderTable(data = departments) {
+      tableBody.innerHTML = "";
+      data.forEach(item => {
+        const firstLevelDept = item.parent_id ?? "无"; // 直接显示 parent_id 数字
+
+        const tr = document.createElement("tr");
+        tr.className = "table-row-hover";
+        tr.innerHTML = `
+          <td class="px-6 py-4 text-sm text-gray-900">${firstLevelDept}</td>
+          <td class="px-6 py-4 text-sm text-gray-900">${item.name}</td>
+          <td class="px-6 py-4 text-sm text-gray-900">${item.location}</td>
+          <td class="px-6 py-4 text-right text-sm">
+            <button class="text-primary hover:text-primary/80 mr-3 edit-btn" onclick="openEditModal(${item.id})">
+              <i class="fas fa-edit mr-1"></i>修改
+            </button>
+            <button class="text-danger hover:text-danger/80 delete-btn" onclick="confirmDelete(${item.id})">
+              <i class="fas fa-trash-alt mr-1"></i>删除
+            </button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+
+    // 初始化一级科室下拉菜单
+    function initParentIdSelect() {
+      // 添加其他一级科室选项
+      departments.forEach(dept => {
+        if (dept.parent_id === null || dept.parent_id === "") { // 只添加一级科室
+          const option = document.createElement("option");
+          option.value = dept.id;
+          option.textContent = dept.name;
+          parentId.appendChild(option);
+        }
+      });
+    }
+
+    // 打开新增/编辑模态框
+    function openEditModal(id) {
+      modalTitle.textContent = "编辑科室";
+      currentEditId = id;
+      const dept = departments.find(item => item.id === id);
+      if (dept) {
+        parentId.value = dept.parent_id || "";
+        deptName.value = dept.name;
+        deptLocation.value = dept.location;
+      }
+      modalMask.classList.remove("hidden");
+    }
+
+    // 打开新增模态框
+    addBtn.addEventListener("click", () => {
+      modalTitle.textContent = "新增科室";
+      currentEditId = null;
+      parentId.value = "";
+      deptName.value = "";
+      deptLocation.value = "";
+      modalMask.classList.remove("hidden");
+    });
+
+    // 关闭模态框
+    function closeModalFunc() {
+      modalMask.classList.add("hidden");
+      // 清空表单
+      parentId.value = "";
+      deptName.value = "";
+      deptLocation.value = "";
+    }
+
+    closeModal.addEventListener("click", closeModalFunc);
+    cancelBtn.addEventListener("click", closeModalFunc);
+
+  // 保存（新增/编辑）
+  saveBtn.addEventListener("click", () => {
+    const parentIdValue = parentId.value ? parseInt(parentId.value) : null;
+    const name = deptName.value.trim();
+    const location = deptLocation.value.trim();
+
+    if (!name || !location) {
+      alert("请填写科室名称和位置！");
+      return;
+    }
+
+    if (currentEditId) {
+      // 编辑逻辑，发起 PUT 请求到后端
+      fetch(`/api/departments/${currentEditId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name,
+          location,
+          parent_id: parentIdValue
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("编辑成功！");
+          // 更新本地数据后重新渲染
+          const index = departments.findIndex(item => item.id === currentEditId);
+          if (index !== -1) {
+            departments[index] = {
+              ...departments[index],
+              name,
+              location,
+              parent_id: parentIdValue
+            };
+          }
+          renderTable();
+          closeModalFunc();
+        } else {
+          alert("编辑失败：" + data.message);
+        }
+      })
+      .catch(err => {
+        alert("请求出错：" + err);
+      });
+    } else {
+      // 新增逻辑，发起 POST 请求到后端
+      fetch('/api/departments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name,
+          location,
+          parent_id: parentIdValue
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("新增成功！");
+          // 把新增的科室加入本地数组
+          departments.push(data.department);
+          renderTable();
+          closeModalFunc();
+        } else {
+          alert("新增失败：" + data.message);
+        }
+      })
+      .catch(err => {
+        alert("请求出错：" + err);
+      });
+    }
+  });
+
+
+    // 删除确认
+    function confirmDelete(id) {
+      if (!confirm("确定删除该科室吗？")) return;
+
+      fetch(`/api/departments/${id}`, {
+        method: 'DELETE'
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          if (data.success) {
+            departments = departments.filter(item => item.id !== id);
+            renderTable();
+          }
+        })
+        .catch(err => {
+          alert("请求出错：" + err);
+        });
+    }
+
+    // 搜索功能
+    searchInput.addEventListener("input", () => {
+      const keyword = searchInput.value.trim().toLowerCase();
+      const idToName = getIdToNameMap();
+      const filtered = departments.filter(item => {
+        const firstLevelDept = item.parent_id ? idToName[item.parent_id] || "" : "无";
+        return (
+          item.name.toLowerCase().includes(keyword) ||
+          firstLevelDept.toLowerCase().includes(keyword) ||
+          (item.parent_id && item.parent_id.toString().includes(keyword))
+        );
+      });
+      renderTable(filtered);
+    });
+
+    // 初始化页面
+    initParentIdSelect();
+    renderTable();
+  </script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>医疗管理系统 - 管理端</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <style type="text/tailwindcss">
+    @theme {
+      --color-primary: #3b82f6;
+      --color-secondary: #10b981;
+      --color-dark: #1e293b;
+      --color-light: #f8fafc;
+      --font-inter: 'Inter', sans-serif;
+    }
+
+    @utility sidebar-active {
+      background-color: var(--color-primary/10);
+      color: var(--color-primary);
+    }
+
+    @utility card-shadow {
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+
+    body {
+      font-family: var(--font-inter);
+    }
+
+    .submenu {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+
+    .submenu.active {
+      max-height: 500px;
+    }
+
+    .sidebar-item > a > i.rotate {
+      transform: rotate(180deg);
+      transition: transform 0.3s ease;
+    }
+
+    .table-header-blue {
+      background-color: var(--color-primary);
+      color: white;
+    }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden bg-gray-50">
+  <!-- 侧边栏导航 -->
+  <aside class="w-64 bg-white shadow-md flex-shrink-0 hidden md:block">
+    <div class="p-4 border-b table-header-blue"> <!-- 修改为蓝色背景 -->
+      <h1 class="text-xl font-bold text-white flex items-center"> <!-- 修改文字颜色为白色 -->
+        <i class="fas fa-hospital mr-2 text-white"></i> <!-- 修改图标颜色为白色 -->
+        <span>医疗管理系统</span>
+      </h1>
+    </div>
+
+    <nav class="p-4">
+      <ul class="space-y-1">
+        <!-- 首页 -->
+        <li class="sidebar-item">
+          <a href="{{url_for('home')}}" target="mainContent" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 sidebar-active">
+            <i class="fas fa-home w-5 h-5 mr-3 text-primary"></i>
+            <span>首页</span>
+          </a>
+        </li>
+
+        <!-- 患者挂号管理 -->
+        <li class="sidebar-item relative">
+          <a href="#patient-registration" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 submenu-toggle">
+            <i class="fas fa-user-md w-5 h-5 mr-3 text-gray-500"></i>
+            <span>患者挂号管理</span>
+            <i class="fas fa-chevron-down ml-auto text-xs text-gray-400 transition-transform duration-300"></i>
+          </a>
+          <ul class="submenu pl-4 mt-1 space-y-1">
+            <li><a href="{{ url_for('registration_query') }}" target="mainContent" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">挂号记录查询</a></li>
+            <li><a href="{{ url_for('registration_statistics') }}" target="mainContent" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">挂号统计分析</a></li>
+            <li><a href="{{ url_for('appointment_reminder_page') }}" target="mainContent" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">预约提醒管理</a></li>
+          </ul>
+        </li>
+
+        <!-- 科室管理 -->
+        <li class="sidebar-item relative">
+          <a href="#department-management" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 submenu-toggle">
+            <i class="fas fa-clinic-medical w-5 h-5 mr-3 text-gray-500"></i>
+            <span>科室管理</span>
+            <i class="fas fa-chevron-down ml-auto text-xs text-gray-400 transition-transform duration-300"></i>
+          </a>
+          <ul class="submenu pl-4 mt-1 space-y-1">
+            <li><a href="{{ url_for('department_info') }}" target="mainContent" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">科室信息维护</a></li>
+            <li><a href="{{ url_for('department_performance') }}" target="mainContent" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">科室绩效评估</a></li>
+          </ul>
+        </li>
+
+        <!-- 医生管理 -->
+        <li class="sidebar-item relative">
+          <a href="#doctor-management" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 submenu-toggle">
+            <i class="fas fa-user-doctor w-5 h-5 mr-3 text-gray-500"></i>
+            <span>医生管理</span>
+            <i class="fas fa-chevron-down ml-auto text-xs text-gray-400 transition-transform duration-300"></i>
+          </a>
+          <ul class="submenu pl-4 mt-1 space-y-1">
+            <li><a href="{{ url_for('doctor_profile') }}" target="mainContent" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">医生资料管理</a></li>
+            <li><a href="{{ url_for('doctor_evaluation') }}" target="mainContent" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">医生服务评价</a></li>
+            <li><a href="{{ url_for('doctor_scheduling') }}" target="mainContent" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">医生排班管理</a></li>
+          </ul>
+        </li>
+
+
+        <!-- 内容管理 -->
+        <li class="sidebar-item relative">
+          <a href="#content-management" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 submenu-toggle">
+            <i class="fas fa-file-alt w-5 h-5 mr-3 text-gray-500"></i>
+            <span>内容管理</span>
+            <i class="fas fa-chevron-down ml-auto text-xs text-gray-400 transition-transform duration-300"></i>
+          </a>
+          <ul class="submenu pl-4 mt-1 space-y-1">
+           <li><a href="{{ url_for('article_publishing') }}" target="mainContent" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">文章发布管理</a></li>
+           <li><a href="{{ url_for('multimedia_management') }}" target="mainContent" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">多媒体管理</a></li>
+           <li><a href="{{ url_for('language_support') }}" target="mainContent" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">多语言支持</a></li>
+           <li><a href="{{ url_for('comment_moderation') }}" target="mainContent" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">评论审核</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- 主内容区域 -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm">
+      <div class="flex items-center justify-between h-16 px-6">
+        <div class="flex items-center">
+          <button class="mr-4 md:hidden text-gray-500 focus:outline-none" id="mobile-menu-button">
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+          <!-- 顶部标题 -->
+          <h2 class="text-lg font-semibold text-gray-800" id="page-title">医疗管理系统 - 首页</h2>
+        </div>
+        <div class="flex items-center">
+          <button class="relative p-2 text-gray-500 hover:text-primary mr-4">
+            <i class="fas fa-bell text-xl"></i>
+            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </button>
+          <div class="flex items-center">
+            <img src="https://picsum.photos/200/200" alt="管理员头像" class="w-8 h-8 rounded-full mr-2">
+            <span class="text-sm font-medium">管理员</span>
+          </div>
+        </div>
+      </div>
+    </header>
+    <!-- 在侧边栏或顶部导航栏中添加 -->
+    <div class="logout-area" style="position: fixed; bottom: 20px; left: 20px;">
+        <a href="{{ url_for('admin_logout') }}" class="logout-btn"
+           style="background: #e74c3c; color: white; padding: 10px 15px; border-radius: 4px; text-decoration: none;">
+           <i class="fas fa-sign-out-alt"></i> 退出登录
+        </a>
+    </div>
+    <!-- 页面内容 -->
+    <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+      <iframe name="mainContent" id="mainContent" class="w-full h-full border-0" src="{{url_for('home')}}"></iframe>
+    </main>
+  </div>
+
+  <script>
+    // 二级菜单切换功能
+    document.addEventListener('DOMContentLoaded', function() {
+      // 二级菜单切换
+      const submenuToggles = document.querySelectorAll('.submenu-toggle');
+      submenuToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+          e.preventDefault();
+
+          // 关闭其他所有子菜单
+          document.querySelectorAll('.submenu').forEach(menu => {
+            if (menu !== this.nextElementSibling) {
+              menu.classList.remove('active');
+              const parentIcon = menu.previousElementSibling.querySelector('i:last-child');
+              if (parentIcon) parentIcon.classList.remove('rotate');
+            }
+          });
+
+          // 切换当前子菜单
+          const submenu = this.nextElementSibling;
+          submenu.classList.toggle('active');
+
+          // 旋转箭头图标
+          const icon = this.querySelector('i:last-child');
+          icon.classList.toggle('rotate');
+        });
+      });
+
+      // 移动端菜单切换
+      const mobileMenuButton = document.getElementById('mobile-menu-button');
+      const sidebar = document.querySelector('aside');
+
+      if (mobileMenuButton && sidebar) {
+        mobileMenuButton.addEventListener('click', function() {
+          sidebar.classList.toggle('hidden');
+          sidebar.classList.toggle('block');
+        });
+      }
+
+      // 监听iframe加载完成事件，更新页面标题
+      const mainIframe = document.getElementById('mainContent');
+      const pageTitle = document.getElementById('page-title');
+
+      if (mainIframe && pageTitle) {
+        // 设置初始标题
+        pageTitle.textContent = '医疗管理系统 - 首页';
+
+        // 监听iframe加载完成事件
+        mainIframe.addEventListener('load', function() {
+          try {
+            if (mainIframe.contentDocument && mainIframe.contentDocument.title) {
+              pageTitle.textContent = '医疗管理系统 - ' + mainIframe.contentDocument.title;
+            }
+          } catch (e) {
+            // 跨域访问iframe的title会报错，这里忽略
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

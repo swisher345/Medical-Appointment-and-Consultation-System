@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>医生排班管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <style>
+    .shadow-card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .btn-hover { transition: all 0.2s ease; }
+    .btn-hover:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    [data-field] { display: none; } /* 隐藏数据字段 */
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+  <main class="container mx-auto px-4 py-6">
+    <!-- 标题和操作区 -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">医生排班管理</h1>
+        <p class="text-sm text-gray-500 mt-1">管理医生排班信息</p>
+      </div>
+      <div class="mt-4 md:mt-0 flex space-x-3">
+        <a href="/doctor-scheduling" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 btn-hover">
+          <i class="fa fa-refresh mr-2"></i>刷新
+        </a>
+        <button onclick="openModal()" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 btn-hover">
+          <i class="fa fa-plus mr-2"></i>新增排班
+        </button>
+      </div>
+    </div>
+
+    <!-- 数据概览 -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div class="bg-white rounded-lg shadow-card p-5">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-blue-100 text-blue-500">
+            <i class="fa fa-user-md"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm text-gray-500">医生总数</p>
+            <p id="doctor-count" class="text-xl font-semibold text-gray-900 mt-1">{{ stats.doctor_count }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-card p-5">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-green-100 text-green-500">
+            <i class="fa fa-calendar-check-o"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm text-gray-500">今日排班</p>
+            <p id="today-schedules" class="text-xl font-semibold text-gray-900 mt-1">{{ stats.today_schedules }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-card p-5">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-yellow-100 text-yellow-500">
+            <i class="fa fa-clock-o"></i>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm text-gray-500">待排班</p>
+            <p id="pending-schedules" class="text-xl font-semibold text-gray-900 mt-1">{{ stats.pending_schedules }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 搜索筛选 -->
+    <div class="bg-white rounded-lg shadow-card p-4 mb-6">
+      <form method="get" class="flex flex-col md:flex-row gap-4">
+        <div class="relative flex-grow">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fa fa-search text-gray-400"></i>
+          </div>
+          <input type="text" name="search" placeholder="搜索医生/科室"
+                 value="{{ request_args.get('search', '') }}"
+                 class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        </div>
+
+        <div class="flex-grow md:w-48">
+          <select name="doctor_id" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md">
+            <option value="">所有医生</option>
+            {% for doctor in doctors %}
+            <option value="{{ doctor.id }}" {% if request_args.get('doctor_id')|string == doctor.id|string %}selected{% endif %}>
+              {{ doctor.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="flex-grow md:w-48">
+          <select name="department_id" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md">
+            <option value="">所有科室</option>
+            {% for dept in departments %}
+            <option value="{{ dept.id }}" {% if request_args.get('department_id')|string == dept.id|string %}selected{% endif %}>
+              {{ dept.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="flex-grow md:w-48">
+          <select name="shift" class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md">
+            <option value="">所有班次</option>
+            <option value="0" {% if request_args.get('shift') == '0' %}selected{% endif %}>上午班</option>
+            <option value="1" {% if request_args.get('shift') == '1' %}selected{% endif %}>下午班</option>
+            <option value="2" {% if request_args.get('shift') == '2' %}selected{% endif %}>晚上班</option>
+          </select>
+        </div>
+
+        <div class="flex-grow md:w-56">
+          <input type="date" name="date" value="{{ request_args.get('date', '') }}"
+                 class="block w-full pl-3 pr-3 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md">
+        </div>
+
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+          筛选
+        </button>
+
+        {% if request_args %}
+        <a href="/doctor-scheduling" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center">
+          清除
+        </a>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- 排班表格 -->
+    <div class="bg-white rounded-lg shadow-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">医生姓名</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">科室</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">工作日期</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">班次</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for schedule in schedules %}
+            <tr data-id="{{ schedule.id }}">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                {{ schedule.doctor_name }}
+                <span data-field="doctor_id" class="hidden">{{ schedule.doctor_id }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {{ schedule.department_name }}
+                <span data-field="department_id" class="hidden">{{ schedule.department_id }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-field="work_date">
+                {{ schedule.work_date.strftime('%Y-%m-%d') }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <span data-field="shift">{{ schedule.shift }}</span>
+                {{ shift_names[schedule.shift] }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span data-field="status">{{ schedule.status }}</span>
+                {% if schedule.status == 1 %}
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  已排班
+                </span>
+                {% else %}
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                  待排班
+                </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button onclick="editSchedule('{{ schedule.id }}')"
+                        class="text-blue-600 hover:text-blue-900 mr-3">
+                  <i class="fa fa-pencil"></i>
+                </button>
+                <button onclick="deleteSchedule('{{ schedule.id }}')"
+                        class="text-red-600 hover:text-red-900">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="px-6 py-4 text-center text-gray-500">没有找到排班记录</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- 新增排班模态框 -->
+  <div id="scheduleModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 transform transition-all">
+      <div class="flex justify-between items-center p-4 border-b">
+        <h3 class="text-lg font-medium">添加排班</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div class="p-4">
+        <form id="addScheduleForm" onsubmit="addSchedule(event)">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">医生</label>
+            <select name="doctor_id" required class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md doctor-select">
+              <option value="">请选择医生</option>
+              {% for doctor in doctors %}
+              <option value="{{ doctor.id }}" data-department="{{ doctor.department_id }}">
+                {{ doctor.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">科室</label>
+            <select name="department_id" required class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md department-select">
+              {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">日期</label>
+            <input type="date" name="work_date" required class="block w-full pl-3 pr-3 py-2 text-base border border-gray-300 rounded-md">
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">班次</label>
+            <select name="shift" required class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md">
+              <option value="0">上午班</option>
+              <option value="1">下午班</option>
+              <option value="2">晚上班</option>
+            </select>
+          </div>
+          <div class="flex justify-end space-x-3 mt-6">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+              取消
+            </button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              保存
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑排班模态框 -->
+  <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 transform transition-all">
+      <div class="flex justify-between items-center p-4 border-b">
+        <h3 class="text-lg font-medium">编辑排班</h3>
+        <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-500">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div class="p-4">
+        <form id="editScheduleForm" onsubmit="updateSchedule(event)">
+          <input type="hidden" name="schedule_id">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">医生</label>
+            <select name="doctor_id" required class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md doctor-select">
+              {% for doctor in doctors %}
+              <option value="{{ doctor.id }}" data-department="{{ doctor.department_id }}">
+                {{ doctor.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">科室</label>
+            <select name="department_id" required class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md department-select">
+              {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">日期</label>
+            <input type="date" name="work_date" required class="block w-full pl-3 pr-3 py-2 text-base border border-gray-300 rounded-md">
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">班次</label>
+            <select name="shift" required class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md">
+              <option value="0">上午班</option>
+              <option value="1">下午班</option>
+              <option value="2">晚上班</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+            <select name="status" required class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md">
+              <option value="1">已排班</option>
+              <option value="0">待排班</option>
+            </select>
+          </div>
+          <div class="flex justify-end space-x-3 mt-6">
+            <button type="button" onclick="closeEditModal()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+              取消
+            </button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              保存
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 医生选择变化时更新科室
+    document.querySelectorAll('.doctor-select').forEach(select => {
+      select.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const departmentId = selectedOption.dataset.department;
+        if (departmentId) {
+          this.closest('form').querySelector('.department-select').value = departmentId;
+        }
+      });
+    });
+
+    // 模态框控制
+    function openModal() {
+      document.getElementById('scheduleModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('scheduleModal').classList.add('hidden');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.add('hidden');
+    }
+
+    // 添加排班（改进版）
+    function addSchedule(event) {
+      event.preventDefault();
+      const form = event.target;
+      const submitBtn = form.querySelector('button[type="submit"]');
+
+      // 禁用按钮防止重复提交
+      const originalBtnText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 提交中...';
+
+      // 获取并验证数据
+      const formData = new FormData(form);
+      const rawData = {
+        doctor_id: formData.get('doctor_id'),
+        department_id: formData.get('department_id'),
+        work_date: formData.get('work_date'),
+        shift: formData.get('shift')
+      };
+
+      // 数据预处理
+      const processedData = {
+        doctor_id: parseInt(rawData.doctor_id),
+        department_id: parseInt(rawData.department_id),
+        work_date: rawData.work_date,
+        shift: parseInt(rawData.shift)
+      };
+
+      // 前端验证
+      const errors = [];
+      if (isNaN(processedData.doctor_id)) errors.push('请选择医生');
+      if (isNaN(processedData.department_id)) errors.push('请选择科室');
+      if (!processedData.work_date) errors.push('请选择日期');
+      if (isNaN(processedData.shift)) errors.push('请选择班次');
+
+      if (errors.length > 0) {
+        alert('验证失败：\n' + errors.join('\n'));
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+        return;
+      }
+
+      // 发送请求
+      fetch('/api/schedules', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // 如果需要其他自定义头部可以在这里添加
+          // 'X-Custom-Header': 'value'
+        },
+        body: JSON.stringify(processedData)
+      })
+      .then(async response => {
+        const data = await response.json();
+
+        if (!response.ok) {
+          // 显示服务器返回的错误详情
+          throw new Error(data.message || `请求失败 (${response.status})`);
+        }
+
+        return data;
+      })
+      .then(data => {
+        alert(`排班添加成功！\n医生ID: ${data.doctor_id}\n日期: ${data.work_date}\n班次: ${['上午', '下午', '晚上'][data.shift]}`);
+        closeModal();
+        window.location.reload(); // 刷新列表
+      })
+      .catch(error => {
+        console.error('添加排班错误:', error);
+        alert(`操作失败：${error.message}\n请检查控制台获取详情(F12)`);
+      })
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      });
+    }
+
+    // 编辑排班 - 获取数据
+    function editSchedule(scheduleId) {
+      fetch(`/api/schedules/${scheduleId}`)
+        .then(response => response.json())
+        .then(schedule => {
+          const form = document.getElementById('editScheduleForm');
+          form.querySelector('[name="schedule_id"]').value = schedule.id;
+          form.querySelector('[name="doctor_id"]').value = schedule.doctor_id;
+          form.querySelector('[name="department_id"]').value = schedule.department_id;
+          form.querySelector('[name="work_date"]').value = schedule.work_date.split('T')[0];
+          form.querySelector('[name="shift"]').value = schedule.shift;
+          form.querySelector('[name="status"]').value = schedule.status;
+          document.getElementById('editModal').classList.remove('hidden');
+        })
+        .catch(error => {
+          alert('获取排班数据失败: ' + error.message);
+        });
+    }
+
+    // 更新排班
+    function updateSchedule(event) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      fetch(`/api/schedules/${data.schedule_id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('更新失败');
+        return response.json();
+      })
+      .then(data => {
+        alert('更新成功: ' + data.message);
+        closeEditModal();
+        window.location.reload();
+      })
+      .catch(error => {
+        alert('错误: ' + error.message);
+      });
+    }
+
+    // 删除排班
+    function deleteSchedule(scheduleId) {
+      if (!confirm('确定要删除这条排班记录吗？')) return;
+
+      fetch(`/api/schedules/${scheduleId}`, {
+        method: 'DELETE'
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('删除失败');
+        return response.json();
+      })
+      .then(data => {
+        alert('删除成功: ' + data.message);
+        window.location.reload();
+      })
+      .catch(error => {
+        alert('错误: ' + error.message);
+      });
+    }
+  </script>
+</body>
+</html>

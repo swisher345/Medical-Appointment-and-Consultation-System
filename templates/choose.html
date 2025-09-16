@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>远程医疗问诊平台 - 科室选择</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .step-active {
+                @apply bg-primary text-white border-primary;
+            }
+            .一级科室容器 {
+                @apply p-4 border-b border-gray-100 hover:bg-primary/5 cursor-pointer transition-all duration-200;
+            }
+            .二级科室容器 {
+                @apply pl-12 overflow-hidden transition-all duration-300 ease-in-out;
+            }
+            .二级科室项 {
+                @apply p-3 border-b border-gray-50 hover:bg-primary/5 transition-all duration-200;
+            }
+            .rotate-icon {
+                @apply transition-transform duration-300;
+            }
+            .rotate-icon.open {
+                @apply transform rotate-90;
+            }
+            .hidden {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-inter">
+
+    <!-- 顶部导航栏：用户中心按钮 右上角 -->
+    <nav class="fixed top-0 left-0 w-full bg-white shadow-md z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-end items-center">
+            <a href="/user_center" class="text-primary font-semibold flex items-center hover:underline">
+                <i class="fa fa-user-circle-o mr-2"></i>用户中心
+            </a>
+        </div>
+    </nav>
+
+    <!-- 页面主体：增加内边距避免被导航遮挡 -->
+    <div class="container mx-auto px-4 py-8 pt-20 max-w-4xl">
+        <!-- 步骤导航 -->
+        <div class="flex justify-between mb-10 relative">
+            <div class="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -z-10 transform -translate-y-1/2"></div>
+            <div class="flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center step-active border-2">
+                    <i class="fa fa-building-o"></i>
+                </div>
+                <span class="mt-2 text-sm font-medium text-white">选择科室</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-white text-gray-300 border-2 border-gray-200">
+                    <i class="fa fa-user-md"></i>
+                </div>
+                <span class="mt-2 text-sm font-medium text-gray-500">选择医生</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-white text-gray-300 border-2 border-gray-200">
+                    <i class="fa fa-calendar"></i>
+                </div>
+                <span class="mt-2 text-sm font-medium text-gray-500">选择时间</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center bg-white text-gray-300 border-2 border-gray-200">
+                    <i class="fa fa-check"></i>
+                </div>
+                <span class="mt-2 text-sm font-medium text-gray-500">确认挂号</span>
+            </div>
+        </div>
+
+        <!-- 科室选择区域 -->
+        <div class="bg-white rounded-xl p-6 shadow-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                <i class="fa fa-building-o text-primary mr-2"></i>选择就诊科室
+            </h2>
+
+            <!-- 科室列表 -->
+            {% for parent in parent_departments %}
+                <!-- 一级科室 -->
+                <div class="一级科室容器 flex justify-between items-center" onclick="toggleDept(this)">
+                    <div class="flex items-center">
+                        <i class="fa fa-hospital-o text-primary mr-3"></i>
+                        <span>{{ parent.name }}</span>
+                    </div>
+                    {% if parent.children %}
+                        <i class="fa fa-angle-right text-neutral-400 rotate-icon"></i>
+                    {% endif %}
+                </div>
+
+                <!-- 二级科室容器 -->
+                {% if parent.children %}
+                    <div class="二级科室容器 hidden">
+                        {% for child in parent.children %}
+                            <a href="/doctors?dept_id={{ child.id }}" class="二级科室项 block text-primary">
+                                <i class="fa fa-stethoscope text-primary/70 mr-2"></i>
+                                {{ child.name }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        function toggleDept(element) {
+            try {
+                const content = element.nextElementSibling;
+                if (!content || !content.classList.contains('二级科室容器')) {
+                    console.warn('未找到对应的二级科室容器');
+                    return;
+                }
+
+                const icon = element.querySelector('.rotate-icon');
+                const isHidden = content.classList.contains('hidden');
+                content.classList.toggle('hidden');
+
+                if (icon) {
+                    icon.classList.toggle('open', !isHidden);
+                }
+
+                document.querySelectorAll('.二级科室容器:not(.hidden)').forEach(item => {
+                    if (item !== content) {
+                        item.classList.add('hidden');
+                        const siblingIcon = item.previousElementSibling?.querySelector('.rotate-icon');
+                        if (siblingIcon) siblingIcon.classList.remove('open');
+                    }
+                });
+
+            } catch (error) {
+                console.error('下拉菜单切换失败:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.二级科室容器').forEach(el => el.classList.add('hidden'));
+            console.log('页面初始化完成，二级科室已默认隐藏');
+        });
+    </script>
+</body>
+
+</html>

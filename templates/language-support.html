@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>多语言支持</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; background: #f3f4f6; }
+    h2 { margin-bottom: 20px; color: #1e293b; }
+    label { font-weight: bold; }
+    .lang-item {
+      background: #fff;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .btn {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    .translate { background: #3b82f6; margin-right: 8px; }
+    .delete { background: #ef4444; }
+  </style>
+</head>
+<body>
+  <h2>多语言支持管理</h2>
+
+  <div class="lang-item">
+    <span>健康饮食（中文）</span>
+    <div>
+      <button class="btn translate">翻译成英文</button>
+      <button class="btn delete">删除</button>
+    </div>
+  </div>
+
+  <div class="lang-item">
+    <span>高血压管理（中文）</span>
+    <div>
+      <button class="btn translate">翻译成法语</button>
+      <button class="btn delete">删除</button>
+    </div>
+  </div>
+</body>
+</html>

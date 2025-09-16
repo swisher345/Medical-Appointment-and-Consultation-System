@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>远程医疗问诊平台 - 患者帮助</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e6f0ff 0%, #f5f9ff 100%);
+        }
+        .background-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            object-fit: cover;
+        }
+        .slide.active {
+            opacity: 1;
+        }
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+        .help-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 800px;
+            max-width: 90%;
+            padding: 40px;
+            position: relative;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .help-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .help-header h1 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .help-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        .help-content {
+            line-height: 1.6;
+        }
+        .help-content h2 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .help-content p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景图片轮播 -->
+    <div class="background-slider">
+        <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="医疗背景1" class="slide active">
+        <img src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="医疗背景2" class="slide">
+        <img src="https://images.unsplash.com/photo-1581595219315-a187dd40c322?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="医疗背景3" class="slide">
+        <img src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="医疗背景4" class="slide">
+    </div>
+    <div class="background-overlay"></div>
+    <div class="help-container">
+        <div class="help-header">
+            <h1>患者帮助中心</h1>
+            <p>以下是一些常见问题及解答</p>
+        </div>
+        <div class="help-content">
+            <h2>如何注册账号？</h2>
+            <p>在登录页面点击“立即注册”按钮，按照提示填写相关信息，包括用户名、手机号、密码等，完成填写后提交即可完成注册。</p>
+
+            <h2>忘记密码怎么办？</h2>
+            <p>如果您忘记了密码，请联系客服人员重置密码，客服电话：123456789。</p>
+
+            <h2>如何进行问诊？</h2>
+            <p>登录账号后，在平台首页选择合适的医生，点击“预约问诊”，选择问诊时间和方式，提交预约请求，等待医生确认即可。</p>
+        </div>
+    </div>
+    <script>
+        // 背景图片轮播效果
+        document.addEventListener('DOMContentLoaded', function() {
+            const slides = document.querySelectorAll('.background-slider .slide');
+            let current = 0;
+
+            function nextSlide() {
+                slides[current].classList.remove('active');
+                current = (current + 1) % slides.length;
+                slides[current].classList.add('active');
+            }
+
+            // 每6秒切换一次图片
+            setInterval(nextSlide, 6000);
+
+            // 预加载所有图片
+            slides.forEach(slide => {
+                const image = new Image();
+                image.src = slide.src;
+            });
+        });
+    </script>
+</body>
+</html>

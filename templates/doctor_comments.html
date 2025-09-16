@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ doctor_info['姓名'] }} - 用户评价</title>
+    <style>
+        /* 设置整体页面样式，以蓝白色为主调 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #007BFF;
+            text-align: center;
+        }
+
+        /* 评论容器样式 */
+       .comments-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+            flex: 1;
+        }
+
+        /* 每条评论的样式 */
+       .comment {
+            border-bottom: 1px solid #e1f0ff;
+            padding: 10px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+       .comment:last-child {
+            border-bottom: none;
+        }
+
+        /* 用户信息和评分的容器样式 */
+       .user-rating-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 用户信息样式 */
+       .user-info {
+            font-weight: bold;
+            color: #007BFF;
+        }
+
+        /* 评分样式 */
+       .rating {
+            color: orange;
+            display: inline-block;
+            position: relative;
+            font-size: 20px;
+        }
+
+       .rating::before {
+            content: '★★★★★';
+            display: block;
+            color: #ccc;
+        }
+
+       .rating .filled-stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            color: orange;
+        }
+
+        /* 评论内容样式 */
+       .comment-text {
+            margin-top: 5px;
+            color: #333;
+        }
+
+        /* 页码按钮样式 */
+       .page-button {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-right: 5px;
+        }
+
+       .page-button.active {
+            background-color: white;
+            color: #007BFF;
+        }
+
+        /* 翻页按钮样式 */
+       .page-arrow-button {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-right: 5px;
+        }
+
+        /* 返回按钮样式 */
+       .back-button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            text-align: center;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-top: 20px; /* 新增：增加按钮上方的间距 */
+            align-self: flex-start;
+        }
+
+       .back-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* 页码容器样式 */
+       .page-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        /* 发表评论表单样式 */
+       .comment-form {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+       .comment-form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+       .comment-form input,
+       .comment-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+       .comment-form button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+       .comment-form button:hover {
+            background-color: #0056b3;
+        }
+
+        /* 星星评分样式 */
+       .star-rating {
+            display: inline-block;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+       .star-rating .star {
+            color: #ccc;
+            display: inline-block;
+            margin-right: 2px;
+        }
+
+       .star-rating .star.filled {
+            color: orange;
+        }
+
+    /* 词云图片样式 */
+    .wordcloud-section {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .wordcloud-img {
+        max-width: 80%;  /* 控制图片宽度 */
+        height: auto;    /* 保持比例 */
+        border: 1px solid #ddd;  /* 可选边框 */
+        border-radius: 8px;      /* 圆角 */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);  /* 轻微阴影 */
+    }
+
+    </style>
+</head>
+
+<body>
+    <h1>{{ doctor_info['姓名'] }} 的用户评价 (共 {{ total_reviews }} 条)</h1>
+        <!-- 在现有代码的comments-container div之后添加 -->
+    <div class="wordcloud-section">
+        <h3>评论关键词词云</h3>
+        <img src="{{ url_for('static', filename='images/wordcloud_doctor_3.png') }}" alt="词云" width="400" height="200"/>
+    </div>
+    <div class="comments-container">
+        {% set start_index = (current_page - 1) * 4 %}
+        {% set end_index = start_index + 4 %}
+        {% if reviews %}
+            {% for review in reviews[start_index:end_index] %}
+                <div class="comment">
+                    <div class="user-rating-container">
+                        <div class="user-info">
+                            用户: {{ review['user_name'] }}
+                        </div>
+                        <div class="rating">
+                            <span class="filled-stars">★★★★★</span>
+                            评分: {{ review['rating'] }} 星
+                        </div>
+                    </div>
+                    <div class="comment-text">{{ review['content'] }}</div>
+                    <div class="sentiment">
+                        情感分析: {{ review['sentiment'] }}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>暂无用户评价。</p>
+        {% endif %}
+    </div>
+    <div class="page-container">
+        {% set total_pages = (total_reviews / 4) | round(0, 'ceil') | int %}
+        {% if current_page > 1 %}
+            <a href="{{ url_for('doctor_comments', doctor_id=doctor_id, current_page=current_page - 1) }}"
+                class="page-arrow-button">&lt;</a>
+        {% endif %}
+        {% for page_num in range(1, total_pages + 1) %}
+            {% if page_num == current_page %}
+                <a href="{{ url_for('doctor_comments', doctor_id=doctor_id, current_page=page_num) }}"
+                    class="page-button active">{{ page_num }}</a>
+            {% else %}
+                <a href="{{ url_for('doctor_comments', doctor_id=doctor_id, current_page=page_num) }}"
+                    class="page-button">{{ page_num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if current_page < total_pages %}
+            <a href="{{ url_for('doctor_comments', doctor_id=doctor_id, current_page=current_page + 1) }}"
+                class="page-arrow-button">&gt;</a>
+        {% endif %}
+    </div>
+
+
+
+    <!-- 发表评论表单 -->
+    <div class="comment-form">
+        <!-- 在评论表单上方添加 -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-danger">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+        <h2>发表评论</h2>
+        <form action="{{ url_for('submit_comment', doctor_id=doctor_id) }}" method="post">
+            <label for="rating">评分:</label>
+            <div class="star-rating" id="starRating">
+                <span class="star" data-value="1">★</span>
+                <span class="star" data-value="2">★</span>
+                <span class="star" data-value="3">★</span>
+                <span class="star" data-value="4">★</span>
+                <span class="star" data-value="5">★</span>
+            </div>
+            <input type="hidden" id="ratingValue" name="rating" value="1">
+            <label for="comments">评论内容:</label>
+            <textarea id="comments" name="comments" rows="4" required></textarea>
+            <button type="submit">提交评论</button>
+        </form>
+    </div>
+    <!-- 调整了按钮的位置，现在在评论表单之后 -->
+    <a href="{{ url_for('doctor_detail', doctor_id=doctor_id, current_page=current_page) }}" class="back-button">返回医生详情页</a>
+
+    <script>
+        // 初始化已有评论的评分显示
+        document.addEventListener('DOMContentLoaded', function() {
+            // 处理已有评论的评分显示
+            const ratings = document.querySelectorAll('.rating');
+            ratings.forEach(rating => {
+                const text = rating.textContent;
+                const match = text.match(/评分:\s*(\d+\.?\d*)\s*星/);
+                if (match && match[1]) {
+                    const score = parseFloat(match[1]);
+                    const filledStars = rating.querySelector('.filled-stars');
+                    if (filledStars) {
+                        filledStars.style.width = `calc(${score} * 20%)`;
+                    }
+                }
+            });
+
+            // 处理星星评分交互
+            const starRating = document.getElementById('starRating');
+            const stars = starRating.querySelectorAll('.star');
+            const ratingValue = document.getElementById('ratingValue');
+
+            // 鼠标移动时高亮星星
+            starRating.addEventListener('mousemove', function(e) {
+                const rect = starRating.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const starWidth = rect.width / 5; // 5个整星
+                const starIndex = Math.min(4, Math.floor(x / starWidth)); // 0-4
+
+                // 重置所有星星
+                stars.forEach(star => star.classList.remove('filled'));
+
+                // 高亮到当前位置
+                for (let i = 0; i <= starIndex; i++) {
+                    stars[i].classList.add('filled');
+                }
+            });
+
+            // 鼠标离开时恢复已选状态
+            starRating.addEventListener('mouseleave', function() {
+                const value = parseInt(ratingValue.value);
+
+                stars.forEach((star, index) => {
+                    if (index < value) {
+                        star.classList.add('filled');
+                    } else {
+                        star.classList.remove('filled');
+                    }
+                });
+            });
+
+            // 点击时选择星星
+            starRating.addEventListener('click', function(e) {
+                const rect = starRating.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const starWidth = rect.width / 5; // 5个整星
+                const starIndex = Math.min(4, Math.floor(x / starWidth)); // 0-4
+                const value = starIndex + 1; // 1-5
+
+                ratingValue.value = value;
+
+                // 重置所有星星
+                stars.forEach(star => star.classList.remove('filled'));
+
+                // 高亮选中的星星
+                for (let i = 0; i < value; i++) {
+                    stars[i].classList.add('filled');
+                }
+            });
+
+            // 默认选中1星
+            stars[0].classList.add('filled');
+        });
+    </script>
+</body>
+
+</html>

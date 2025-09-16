@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <title>用户中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-neutral-100 min-h-screen p-6">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 relative">
+        <!-- 修改密码按钮，放右上角 -->
+        <button
+            onclick="openModal()"
+            class="absolute top-6 right-6 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition"
+        >修改密码</button>
+
+        <!-- 用户信息 -->
+        <section>
+            <h2 class="text-3xl font-bold text-neutral-800 mb-6">欢迎,用户{{ user.name }}</h2>
+            <div class="grid grid-cols-2 gap-6 text-neutral-700">
+                <p><span class="font-semibold text-neutral-600">用户名：</span> {{ user.username }}</p>
+                <p><span class="font-semibold text-neutral-600">电话：</span> {{ user.phone }}</p>
+                <p><span class="font-semibold text-neutral-600">邮箱：</span> {{ user.email }}</p>
+                <p><span class="font-semibold text-neutral-600">最近登录时间：</span> {{ user.last_login_time }}</p>
+            </div>
+            <div class="mt-6">
+                <a href="{{ url_for('user_logout') }}"
+                   class="inline-block bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg shadow transition">退出登录</a>
+            </div>
+        </section>
+
+        <!-- 分隔线 -->
+        <hr class="my-8 border-neutral-300" />
+
+        <!-- 智能机器人聊天记录 -->
+        <section>
+            <h3 class="text-2xl font-semibold text-neutral-800 mb-4">智能机器人聊天记录</h3>
+            {% if chat_history %}
+                <ul class="space-y-4 max-h-80 overflow-y-auto">
+                    {% for chat in chat_history %}
+                        <li class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <p><strong class="text-primary">问：</strong> {{ chat.question }}</p>
+                            <p class="mt-1"><strong class="text-primary">答：</strong> {{ chat.answer }}</p>
+                            <p class="mt-2 text-sm text-neutral-500">
+                                时间：{{ chat.chat_time }} | 来源：{{ 'API' if chat.from_api else '本地' }}
+                            </p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-neutral-500">暂无聊天记录</p>
+            {% endif %}
+        </section>
+
+        <!-- 分隔线 -->
+        <hr class="my-8 border-neutral-300" />
+
+        <!-- 我的预约记录 -->
+        <section>
+            <h3 class="text-2xl font-semibold text-neutral-800 mb-4">我的预约记录</h3>
+            {% if appointments %}
+                <ul class="space-y-4 max-h-80 overflow-y-auto">
+                    {% for appt in appointments %}
+                        <li class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <p><strong>预约时间：</strong> {{ appt.appointment_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                            <p><strong>医生：</strong> {{ appt.doctor.name }} ({{ appt.doctor.title_id }})</p>
+                            <p><strong>状态：</strong>
+                                {% if appt.status == 1 %}
+                                    <span class="text-green-600 font-semibold">已确认</span>
+                                {% else %}
+                                    <span class="text-yellow-600 font-semibold">未确认</span>
+                                {% endif %}
+                            </p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-neutral-500">暂无预约记录</p>
+            {% endif %}
+        </section>
+    </div>
+
+    <!-- 修改密码弹窗背景 -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <!-- 弹窗内容 -->
+        <div class="bg-white rounded-xl p-6 w-full max-w-md relative shadow-lg">
+            <h3 class="text-xl font-semibold mb-4 text-neutral-800">修改密码</h3>
+
+            <!-- 修改密码表单，三个密码框一起出现 -->
+            <form id="changePasswordForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-neutral-700 mb-1" for="oldPassword">请输入原密码</label>
+                    <input
+                        id="oldPassword"
+                        name="old_password"
+                        type="password"
+                        class="w-full border border-neutral-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-500 outline-none"
+                        required
+                    />
+                </div>
+                <div>
+                    <label class="block text-sm text-neutral-700 mb-1" for="newPassword">请输入新密码</label>
+                    <input
+                        id="newPassword"
+                        name="new_password"
+                        type="password"
+                        class="w-full border border-neutral-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-500 outline-none"
+                        required
+                        minlength="6"
+                    />
+                </div>
+                <div>
+                    <label class="block text-sm text-neutral-700 mb-1" for="confirmPassword">确认新密码</label>
+                    <input
+                        id="confirmPassword"
+                        name="confirm_password"
+                        type="password"
+                        class="w-full border border-neutral-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:border-blue-500 outline-none"
+                        required
+                        minlength="6"
+                    />
+                </div>
+                <p id="formError" class="text-red-500 text-sm mt-1 hidden"></p>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-neutral-700 bg-neutral-200 rounded hover:bg-neutral-300 transition">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">修改密码</button>
+                </div>
+            </form>
+
+            <!-- 关闭按钮 -->
+            <button
+                onclick="closeModal()"
+                class="absolute top-2 right-2 text-neutral-500 hover:text-neutral-700 text-2xl leading-none"
+                aria-label="关闭"
+            >&times;</button>
+        </div>
+    </div>
+
+<script>
+    const modalOverlay = document.getElementById('modalOverlay');
+    const changePasswordForm = document.getElementById('changePasswordForm');
+    const formError = document.getElementById('formError');
+
+    function openModal() {
+        modalOverlay.classList.remove('hidden');
+        changePasswordForm.reset();
+        formError.textContent = '';
+        formError.classList.add('hidden');
+    }
+
+    function closeModal() {
+        modalOverlay.classList.add('hidden');
+    }
+
+    changePasswordForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        formError.textContent = '';
+        formError.classList.add('hidden');
+
+        const oldPwd = changePasswordForm.old_password.value.trim();
+        const newPwd = changePasswordForm.new_password.value.trim();
+        const confirmPwd = changePasswordForm.confirm_password.value.trim();
+
+        if (newPwd.length < 6) {
+            formError.textContent = '新密码长度不能少于6位。';
+            formError.classList.remove('hidden');
+            return;
+        }
+        if (newPwd !== confirmPwd) {
+            formError.textContent = '两次输入的新密码不一致。';
+            formError.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const response = await fetch('/change_password', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    old_password: oldPwd,
+                    new_password: newPwd,
+                    confirm_password: confirmPwd
+                })
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert('密码修改成功！');
+                closeModal();
+            } else {
+                formError.textContent = result.message || '修改失败，请重试。';
+                formError.classList.remove('hidden');
+            }
+        } catch (error) {
+            formError.textContent = '网络错误，请稍后重试。';
+            formError.classList.remove('hidden');
+        }
+    });
+</script>
+
+</body>
+</html>

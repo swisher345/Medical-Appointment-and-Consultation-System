@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ doctor_info['姓名'] }} - 医生详情</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f9ff;
+            color: #333;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 102, 204, 0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #0066cc;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 500;
+        }
+
+        .header p {
+            margin-top: 10px;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .doctor-info {
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .doctor-photo {
+            background-color: #e6f2ff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .photo-placeholder {
+            width: 150px;
+            height: 150px;
+            background-color: #cce0ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0066cc;
+            font-size: 24px;
+        }
+
+        .doctor-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            padding: 15px;
+            background-color: #f5f9ff;
+            border-radius: 6px;
+            flex-grow: 1;
+        }
+
+        .detail-label {
+            color: #0066cc;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+        }
+
+        .specialty-item {
+            padding: 15px;
+            background-color: #f5f9ff;
+            border-radius: 6px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            color: #0066cc;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e6f2ff;
+        }
+
+        .section-content {
+            line-height: 1.8;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .back-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #0066cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+        }
+
+        .back-link:hover {
+            background-color: #0055aa;
+        }
+
+        /* 立即预约按钮样式 */
+        .appointment-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+        }
+
+        .appointment-link:hover {
+            background-color: #218838;
+        }
+
+        /* 用户评价按钮样式（紫色） */
+        .reviews-link {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 10px 20px;
+            background-color: #6c63ff;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+        }
+
+        .reviews-link:hover {
+            background-color: #5a55c7;
+        }
+
+        /* 机器人按钮样式 */
+        .robot-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #ff6b6b;
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: 0 6px 16px rgba(255, 107, 107, 0.25);
+            text-decoration: none;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+
+        .robot-btn:hover {
+            background-color: #ff4757;
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.35);
+        }
+
+        .robot-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 按钮容器样式（实现左右分布） */
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .left-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .doctor-info {
+                grid-template-columns: 1fr;
+            }
+
+            .top-row {
+                flex-direction: column;
+            }
+
+            .robot-btn {
+                bottom: 20px;
+                right: 20px;
+                font-size: 16px;
+                padding: 12px 25px;
+            }
+
+            /* 移动端按钮换行显示 */
+            .btn-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .left-buttons {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .appointment-link {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ doctor_info['姓名'] }}</h1>
+            <p>{{ doctor_info['职位'] }}</p>
+        </div>
+
+        <div class="content">
+            <div class="doctor-info">
+                <div class="doctor-photo">
+                    <img src="{{ url_for('get_photo', doctor_id=request.view_args['doctor_id']) }}" alt="{{ doctor_info['姓名'] }}医生照片" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover;">
+                </div>
+
+                <div class="doctor-details">
+                    <div class="top-row">
+                        <div class="detail-item">
+                            <div class="detail-label">一级科室</div>
+                            <div class="detail-value">{{ doctor_info['一级科室'] }}</div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">二级科室</div>
+                            <div class="detail-value">{{ doctor_info['二级科室'] }}</div>
+                        </div>
+                    </div>
+
+                    <div class="specialty-item">
+                        <div class="detail-label">专攻方向</div>
+                        <div class="detail-value">{{ doctor_info['专攻方向'] }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">医生介绍</div>
+                <div class="section-content">
+                    {{ doctor_info['介绍'] }}
+                </div>
+            </div>
+
+            <!-- 新增关键词部分，添加条件判断 -->
+            {% if doctor_info['关键词'] and doctor_info['关键词'] != '' %}
+            <div class="section">
+                <div class="section-title">关键词提取</div>
+                <div class="section-content">
+                    {{ doctor_info['关键词'] }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 按钮容器（实现左右分布） -->
+            <div class="btn-container">
+                <div class="left-buttons">
+                    <a href="{{ url_for('search') }}" class="back-link">返回医生列表</a>
+                    <a href="{{ url_for('doctor_comments', doctor_id=request.view_args['doctor_id']) }}" class="reviews-link">查看用户评价</a>
+                </div>
+                <a href="{{ url_for('appointment_form', doctor_id=request.view_args['doctor_id']) }}" class="appointment-link">立即预约</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 预约按钮 -->
+    <a href="/chatbot" class="robot-btn">智能机器人</a>
+</body>
+
+</html>

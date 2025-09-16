@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>远程智能医疗问诊平台 - 登录</title>
+    <style>
+        /* 现有样式不变，原样保留 */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e6f0ff 0%, #f5f9ff 100%);
+        }
+
+        .background-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            object-fit: cover;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            max-width: 90%;
+            padding: 40px;
+            position: relative;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 48px;
+            color: #1e88e5;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .login-header h1 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 10px;
+            background-color: #ffebee;
+            color: #b71c1c;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .input-icon {
+            position: relative;
+        }
+
+        .input-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 16px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: #1e88e5;
+            box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2);
+            outline: none;
+        }
+
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+        }
+
+        .remember-me input {
+            margin-right: 5px;
+        }
+
+        .forgot-password a {
+            color: #1e88e5;
+            text-decoration: none;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-login:hover {
+            background-color: #0d47a1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .login-footer a {
+            color: #1e88e5;
+            text-decoration: none;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* 管理员登录悬浮按钮 */
+        .admin-login-link {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            background-color: #1e88e5;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .admin-login-link:hover {
+            background-color: #0d47a1;
+            transform: translateY(-2px);
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            border-radius: 6px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* 新增角色选择按钮样式 */
+        .role-selector {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+
+        .role-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background-color: #f5f5f5;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-size: 14px;
+        }
+
+        .role-btn.active {
+            background-color: #1e88e5;
+            color: white;
+        }
+
+        .role-btn:first-child {
+            border-right: 1px solid #e0e0e0;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <!-- 背景图片轮播 -->
+    <div class="background-slider">
+        <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="医疗背景1" class="slide active">
+        <img src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="医疗背景2" class="slide">
+        <img src="https://images.unsplash.com/photo-1581595219315-a187dd40c322?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="医疗背景3" class="slide">
+        <img src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="医疗背景4" class="slide">
+    </div>
+
+    <div class="background-overlay"></div>
+
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo pulse">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <h1>远程智能医疗问诊平台</h1>
+            <p>安全、便捷的在线医疗服务</p>
+        </div>
+
+        <div class="login-body">
+            <div id="error-message" class="alert" style="display: none;"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <div class="role-selector">
+                        <button type="button" class="role-btn active" data-role="user">患者登录</button>
+                        <button type="button" class="role-btn" data-role="doctor">医生登录</button>
+                    </div>
+                </div>
+                <div class="form-group input-icon">
+                    <i class="fas fa-phone-alt"></i>
+                    <input type="text" class="form-control" name="identifier" placeholder="请输入电话号码/电子邮箱" required>
+                </div>
+
+                <div class="form-group input-icon">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" class="form-control" name="password" placeholder="请输入密码" required>
+                </div>
+
+                <div class="remember-forgot">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember">
+                        <label for="remember">记住我</label>
+                    </div>
+                    <div class="forgot-password">
+                        <a href="#" id="forgotPasswordLink">忘记密码?</a>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login">登 录</button>
+            </form>
+        </div>
+
+        <div class="login-footer">
+            还没有账号? <a href="/register">立即注册</a> | <a href="#" id="patientHelpLink">患者帮助</a>
+        </div>
+    </div>
+
+    <!-- 管理员登录浮动按钮 -->
+    <a href="/admin/login" class="admin-login-link">管理员登录</a>
+
+    <!-- 忘记密码模态框 -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>请联系客服人员重置密码，客服电话：123456789。</p>
+        </div>
+    </div>
+
+    <script>
+    // 背景图片轮播效果
+    document.addEventListener('DOMContentLoaded', function() {
+        const slides = document.querySelectorAll('.background-slider .slide');
+        let current = 0;
+
+        function nextSlide() {
+            slides[current].classList.remove('active');
+            current = (current + 1) % slides.length;
+            slides[current].classList.add('active');
+        }
+
+        setInterval(nextSlide, 6000);
+
+        slides.forEach(slide => {
+            const image = new Image();
+            image.src = slide.src;
+        });
+
+        // 角色选择按钮逻辑
+        const roleBtns = document.querySelectorAll('.role-btn');
+        let currentRole = 'user'; // 默认是患者
+
+        roleBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                roleBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentRole = this.dataset.role;
+            });
+        });
+
+        // 表单提交处理
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('error-message');
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            errorMessage.style.display = 'none';
+            const formData = new FormData(loginForm);
+            const identifier = formData.get('identifier');
+            const password = formData.get('password');
+            const submitButton = document.querySelector('.btn-login');
+            const originalText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 登录中...';
+
+            // 根据选择的角色决定请求的URL
+            const url = currentRole === 'doctor' ? '/doctor/login' : '/login';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `identifier=${encodeURIComponent(identifier)}&password=${encodeURIComponent(password)}`
+            })
+           .then(response => {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+                if (!response.ok) {
+                    throw new Error('服务器错误，请稍后重试');
+                }
+                return response.json();
+            })
+           .then(data => {
+                if (data.status === 200) {
+                    if (currentRole === 'doctor') {
+                        // 医生登录成功，跳转到医生中心
+                        window.location.href = '/doctor/center';
+                    } else {
+                        // 患者登录成功，跳转到科室选择
+                        window.location.href = '/department';
+                    }
+                } else {
+                    errorMessage.textContent = data.message;
+                    errorMessage.style.display = 'block';
+                }
+            })
+           .catch(error => {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+                errorMessage.textContent = error.message;
+                errorMessage.style.display = 'block';
+            });
+        });
+
+        // 忘记密码模态框
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        const closeModal = document.querySelector('.close');
+        forgotPasswordLink.addEventListener('click', function() {
+            forgotPasswordModal.style.display = 'block';
+        });
+        closeModal.addEventListener('click', function() {
+            forgotPasswordModal.style.display = 'none';
+        });
+        window.addEventListener('click', function(event) {
+            if (event.target === forgotPasswordModal) {
+                forgotPasswordModal.style.display = 'none';
+            }
+        });
+
+        // 患者帮助跳转
+        const patientHelpLink = document.getElementById('patientHelpLink');
+        patientHelpLink.addEventListener('click', function() {
+            window.location.href = '/help';
+        });
+    });
+</script>
+</body>
+</html>

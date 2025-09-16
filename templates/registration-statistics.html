@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>挂号统计分析</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .chart-container {
+        @apply bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl;
+      }
+      .card-header {
+        @apply text-xl font-bold text-gray-800 mb-4 flex items-center;
+      }
+      .stat-card {
+        @apply bg-white rounded-lg shadow-md p-4 transition-all duration-300 hover:shadow-lg border-l-4;
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      }
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#3b82f6",
+            secondary: "#60a5fa",
+            tertiary: "#bfdbfe",
+            accent: "#2563eb",
+            light: "#f8fafc",
+            dark: "#1e293b",
+          },
+          fontFamily: {
+            inter: ["Inter", "system-ui", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="bg-gray-50 p-6 font-inter">
+  <!-- 顶部导航栏 -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-800">挂号统计分析</h1>
+    <div class="flex space-x-4">
+      <div class="relative">
+        <select
+          id="timeRangeSelect"
+          class="appearance-none bg-white border border-gray-300 rounded-md py-2 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+        >
+          <option value="month">本月</option>
+          <option value="quarter">本季度</option>
+        </select>
+        <div
+          class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"
+        >
+          <i class="fa fa-chevron-down text-xs"></i>
+        </div>
+      </div>
+      <button
+        class="bg-primary hover:bg-accent text-white px-4 py-2 rounded-md transition-colors flex items-center"
+      >
+        <i class="fa fa-download mr-2"></i>导出报告
+      </button>
+    </div>
+  </div>
+
+  <!-- 统计卡片 -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <div class="stat-card border-l-primary">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">总挂号数</p>
+          <h3 id="totalRegistrations" class="text-2xl font-bold mt-1">32,541</h3>
+        </div>
+        <div
+          class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center"
+        >
+          <i class="fa fa-calendar-check text-primary text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card border-l-green-500">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">平均每日挂号</p>
+          <h3 id="dailyAverage" class="text-2xl font-bold mt-1">1,245</h3>
+        </div>
+        <div
+          class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center"
+        >
+          <i class="fa fa-chart-line text-green-500 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card border-l-yellow-500">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-500 text-sm">热门科室</p>
+          <h3 class="text-2xl font-bold mt-1">内科</h3>
+        </div>
+        <div
+          class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center"
+        >
+          <i class="fa fa-user-md text-yellow-500 text-xl"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图表区域 -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div class="lg:col-span-2 chart-container">
+      <div class="card-header">
+        <i class="fa fa-bar-chart text-primary mr-2"></i>
+        <span>挂号数量趋势</span>
+      </div>
+      <div class="h-80">
+        <canvas id="registrationChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <div class="card-header">
+        <i class="fa fa-pie-chart text-primary mr-2"></i>
+        <span>科室分布</span>
+      </div>
+      <div class="h-80">
+        <canvas id="departmentChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 表格区域 -->
+  <div class="chart-container">
+    <div class="card-header">
+      <i class="fa fa-table text-primary mr-2"></i>
+      <span>挂号明细</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead>
+          <tr class="bg-blue-50">
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider"
+            >
+              日期
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider"
+            >
+              挂号数量
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider"
+            >
+              热门科室
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider"
+            >
+              同比增长
+            </th>
+          </tr>
+        </thead>
+        <tbody id="registrationTable" class="bg-white divide-y divide-gray-200">
+          <!-- 明细数据通过JS渲染 -->
+        </tbody>
+      </table>
+    </div>
+    <div
+      class="mt-4 flex justify-between items-center"
+    >
+      <div class="text-sm text-gray-600">显示 1 至 10 条，共 0 条</div>
+      <div class="flex space-x-1">
+        <!-- 分页按钮由JS动态生成 -->
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    let departmentChart = null;
+    let registrationChart = null;
+
+    const recordsPerPage = 10;
+    let currentPage = 1;
+    let allDetails = [];
+
+    function initCharts() {
+      const ctxDept = document.getElementById("departmentChart").getContext("2d");
+      departmentChart = new Chart(ctxDept, {
+        type: "pie",
+        data: {
+          labels: [],
+          datasets: [
+            {
+              data: [],
+              backgroundColor: [],
+              borderColor: [],
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "right" },
+          },
+        },
+      });
+
+      const ctxReg = document
+        .getElementById("registrationChart")
+        .getContext("2d");
+      registrationChart = new Chart(ctxReg, {
+        type: "bar",
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: "挂号数量",
+              data: [],
+              backgroundColor: "rgba(59, 130, 246, 0.7)",
+              borderColor: "rgba(59, 130, 246, 1)",
+              borderWidth: 1,
+              borderRadius: 6,
+              barPercentage: 0.6,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    }
+
+    async function fetchSummary() {
+      const res = await fetch("/api/summary");
+      return res.json();
+    }
+
+    async function fetchDepartments(scope) {
+      const res = await fetch(`/api/departments/statistics?scope=${scope}`);
+      return res.json();
+    }
+
+    async function fetchDetails(scope) {
+      const res = await fetch(`/api/details?scope=${scope}`);
+      return res.json();
+    }
+
+    function transformTrendData(trend) {
+      return {
+        labels: trend.labels,
+        datasets: [
+          {
+            label: "挂号数量",
+            data: trend.counts,
+            backgroundColor: "rgba(59, 130, 246, 0.7)",
+            borderColor: "rgba(59, 130, 246, 1)",
+            borderWidth: 1,
+            borderRadius: 6,
+            barPercentage: 0.6,
+          },
+        ],
+      };
+    }
+
+    function transformDepartmentData(dist) {
+      const labels = dist.map((item) => item.name);
+      const counts = dist.map((item) => item.count);
+      const colors = [
+        "rgba(59, 130, 246, 0.8)",
+        "rgba(96, 165, 250, 0.8)",
+        "rgba(147, 197, 253, 0.8)",
+        "rgba(191, 219, 254, 0.8)",
+        "rgba(219, 234, 254, 0.8)",
+        "rgba(239, 246, 255, 0.8)",
+      ];
+      return {
+        labels,
+        datasets: [
+          {
+            data: counts,
+            backgroundColor: colors.slice(0, counts.length),
+            borderColor: colors
+              .slice(0, counts.length)
+              .map((c) => c.replace("0.8", "1")),
+            borderWidth: 1,
+          },
+        ],
+      };
+    }
+
+    function renderTablePage(page) {
+      currentPage = page;
+      const start = (page - 1) * recordsPerPage;
+      const end = start + recordsPerPage;
+      const pageData = allDetails.slice(start, end);
+
+      const tbody = document.getElementById("registrationTable");
+      tbody.innerHTML = "";
+
+      pageData.forEach((item) => {
+        const growthClass =
+          item.growth_rate === null
+            ? ""
+            : item.growth_rate >= 0
+            ? "text-green-500"
+            : "text-red-500";
+        const growthText =
+          item.growth_rate === null
+            ? "-"
+            : item.growth_rate >= 0
+            ? `+${item.growth_rate}%`
+            : `${item.growth_rate}%`;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap">${item.date}</td>
+          <td class="px-6 py-4 whitespace-nowrap">${item.count}</td>
+          <td class="px-6 py-4 whitespace-nowrap">${item.top_department}</td>
+          <td class="px-6 py-4 whitespace-nowrap"><span class="${growthClass}">${growthText}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      updatePaginationControls(page);
+      updatePaginationInfo(page);
+    }
+
+    function updatePaginationControls(page) {
+      const totalPages = Math.ceil(allDetails.length / recordsPerPage);
+      const paginationContainer = document.querySelector(".flex.space-x-1");
+
+      paginationContainer.innerHTML = "";
+
+      // 上一页按钮
+      const prevBtn = document.createElement("button");
+      prevBtn.innerHTML = '<i class="fa fa-angle-left"></i>';
+      prevBtn.disabled = page === 1;
+      prevBtn.className = `px-3 py-1 border rounded-md ${
+        prevBtn.disabled
+          ? "opacity-50 cursor-not-allowed"
+          : "hover:bg-gray-50"
+      } text-gray-600`;
+      prevBtn.addEventListener("click", () => renderTablePage(page - 1));
+      paginationContainer.appendChild(prevBtn);
+
+      // 页码按钮
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        btn.className = `px-3 py-1 border rounded-md ${
+          i === page
+            ? "border-primary bg-primary text-white"
+            : "border-gray-300 text-gray-600 hover:bg-gray-50"
+        }`;
+        btn.addEventListener("click", () => renderTablePage(i));
+        paginationContainer.appendChild(btn);
+      }
+
+      // 下一页按钮
+      const nextBtn = document.createElement("button");
+      nextBtn.innerHTML = '<i class="fa fa-angle-right"></i>';
+      nextBtn.disabled = page === totalPages;
+      nextBtn.className = `px-3 py-1 border rounded-md ${
+        nextBtn.disabled
+          ? "opacity-50 cursor-not-allowed"
+          : "hover:bg-gray-50"
+      } text-gray-600`;
+      nextBtn.addEventListener("click", () => renderTablePage(page + 1));
+      paginationContainer.appendChild(nextBtn);
+    }
+
+    function updatePaginationInfo(page) {
+      const total = allDetails.length;
+      const start = (page - 1) * recordsPerPage + 1;
+      const end = Math.min(page * recordsPerPage, total);
+
+      const infoDiv = document.querySelector(".mt-4 > .text-sm");
+      if (infoDiv) {
+        infoDiv.textContent = `显示 ${start} 至 ${end} 条，共 ${total} 条`;
+      }
+    }
+
+    async function updateDashboard(scope) {
+      // 1. Summary
+      const summary = await fetchSummary();
+      const data = summary[scope];
+      document.getElementById("totalRegistrations").textContent = data.total_registrations.toLocaleString();
+      document.getElementById("dailyAverage").textContent = data.daily_average.toLocaleString();
+
+      // 热门科室统计卡
+      document.querySelector(".stat-card.border-l-yellow-500 h3").textContent =
+        data.top_department || "-";
+      // document.querySelector(".stat-card.border-l-yellow-500 p").textContent = `占比 ${data.top_department_percentage || 0}%`;
+
+      // 2. Departments 饼图
+      const departmentsData = await fetchDepartments(scope);
+      const deptDistData = transformDepartmentData(
+        departmentsData.department_distribution
+      );
+      departmentChart.data = deptDistData;
+      departmentChart.update();
+
+      // 3. Registration 趋势柱状图
+      const trendData = transformTrendData(departmentsData.registration_trend);
+      registrationChart.data = trendData;
+      registrationChart.update();
+
+      // 4. 明细表格，先存数据再渲染第一页
+      allDetails = await fetchDetails(scope);
+      renderTablePage(1);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initCharts();
+
+      const timeRangeSelect = document.getElementById("timeRangeSelect");
+      updateDashboard(timeRangeSelect.value);
+
+      timeRangeSelect.addEventListener("change", (e) => {
+        updateDashboard(e.target.value);
+      });
+    });
+  </script>
+</body>
+</html>

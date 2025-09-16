@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>医生列表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f9ff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #0066cc;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 500px;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 1px solid #cce0ff;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0, 102, 204, 0.05);
+            outline: none;
+            transition: box-shadow 0.3s;
+        }
+
+        .search-box:focus {
+            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.1);
+        }
+
+        .search-box::placeholder {
+            color: #99b3e6;
+        }
+
+        .pagination {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .page-link {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #0066cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 0 5px;
+            transition: background-color 0.3s;
+        }
+
+        .page-link.current {
+            background-color: white;
+            color: #0066cc;
+            border: 1px solid #0066cc;
+        }
+
+        .page-link.disabled {
+            background-color: #e6f2ff;
+            color: #99b3e6;
+            cursor: not-allowed;
+        }
+
+        .page-link:hover:not(.current):not(.disabled) {
+            background-color: #0055aa;
+        }
+
+        .doctor-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+        }
+
+        .doctor-card {
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 16px rgba(0, 102, 204, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .doctor-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 24px rgba(0, 102, 204, 0.15);
+        }
+
+        .doctor-photo {
+            height: 200px;
+            background-color: #e6f2ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .doctor-photo img {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+
+        .doctor-info {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .doctor-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .doctor-rank {
+            background-color: #e6f2ff;
+            color: #0066cc;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 14px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .doctor-faculty {
+            margin-bottom: 15px;
+            color: #666;
+            font-size: 14px;
+            flex-grow: 1;
+        }
+
+        .faculty-primary {
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .faculty-secondary {
+            color: #999;
+        }
+
+        .doctor-detail {
+            margin-top: auto;
+            text-align: center;
+        }
+
+        .detail-link {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #0066cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .detail-link:hover {
+            background-color: #0055aa;
+        }
+
+        @media (max-width: 1024px) {
+            .doctor-cards {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .doctor-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .doctor-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>医生列表</h1>
+
+        <!-- 搜索框 -->
+        <div class="search-container">
+            <input type="text" class="search-box" placeholder="搜索医生姓名、科室或专长...">
+        </div>
+
+        <div class="doctor-cards">
+            {% set start = (page-1) * doctors_per_page %}
+            {% set end = start + doctors_per_page %}
+            {% for doctor in doctors[start:end] %}
+            <div class="doctor-card">
+                <div class="doctor-photo">
+                    <img src="{{ url_for('get_photo', doctor_id=doctor.doctor_id or loop.index + (page-1)*doctors_per_page) }}" alt="{{ doctor.doct_name }}医生照片">
+                </div>
+                <div class="doctor-info">
+                    <div class="doctor-name">{{ doctor.doct_name }}</div>
+                    <div class="doctor-faculty">
+                        <span class="faculty-primary">{{ doctor.faculty_one_name }}</span>
+                        <span class="faculty-secondary">{{ doctor.faculty_two_name }}</span>
+                    </div>
+                    <div class="doctor-detail">
+                        <a href="{{ url_for('doctor_detail', doctor_id=doctor.doctor_id or loop.index + (page-1)*doctors_per_page, current_page=page) }}" class="detail-link">查看详情</a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div style="width: 100%; text-align: center; padding: 20px; color: #666;">没有找到医生信息</div>
+            {% endfor %}
+        </div>
+
+        <!-- 分页导航 -->
+        <div class="pagination">
+            <!-- 上一页按钮 -->
+            <a href="{{ url_for('index', page=page-1) if page > 1 else '#' }}"
+               class="page-link{% if page == 1 %} disabled{% endif %}">
+                上一页
+            </a>
+
+            <!-- 页码按钮 (显示当前页附近的页码) -->
+            {% set start_page = (page-2) if (page-2) > 0 else 1 %}
+            {% set end_page = (page+2) if (page+2) <= total_pages else total_pages %}
+            {% if start_page > 1 %}
+                <a href="{{ url_for('index', page=1) }}" class="page-link">{{ 1 }}</a>
+                {% if start_page > 2 %}
+                    <span class="page-link">...</span>
+                {% endif %}
+            {% endif %}
+
+            {% for p in range(start_page, end_page+1) %}
+                <a href="{{ url_for('index', page=p) }}" class="page-link{% if page == p %} current{% endif %}">{{ p }}</a>
+            {% endfor %}
+
+            {% if end_page < total_pages %}
+                {% if end_page < total_pages-1 %}
+                    <span class="page-link">...</span>
+                {% endif %}
+                <a href="{{ url_for('index', page=total_pages) }}" class="page-link">{{ total_pages }}</a>
+            {% endif %}
+
+            <!-- 下一页按钮 -->
+            <a href="{{ url_for('index', page=page+1) if page < total_pages else '#' }}"
+               class="page-link{% if page == total_pages %} disabled{% endif %}">
+                下一页
+            </a>
+        </div>
+    </div>
+</body>
+</html>

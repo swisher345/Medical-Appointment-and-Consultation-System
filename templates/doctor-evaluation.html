@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>医生服务质量评价</title>
+  <style>
+    body {
+      font-family: "Microsoft Yahei", sans-serif;
+      margin: 0;
+      background: #f8f9fa;
+      color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+    h2 {
+      margin: 20px 0;
+      color: #2c3e50;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .search-box {
+      position: relative;
+      width: 240px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 8px 12px;
+      padding-left: 36px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      outline: none;
+    }
+    .search-box input:focus {
+      border-color: #3498db;
+    }
+    .search-box i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+    }
+    .table-wrapper {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+    }
+    th {
+      background-color: #3498db;
+      color: white;
+      font-weight: 500;
+      border-bottom: 2px solid #2980b9;
+    }
+    td {
+      border-bottom: 1px solid #eee;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    tr:hover {
+      background-color: #f0f7fd;
+      transition: background-color 0.2s;
+    }
+    .rating-display {
+      color: #ffc107;
+      font-size: 18px;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .btn {
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-view {
+      background-color: #3498db;
+      color: white;
+      border: 1px solid #3498db;
+    }
+    .btn-view:hover {
+      background-color: #2980b9;
+    }
+    .btn-delete {
+      background-color: #e74c3c;
+      color: white;
+      border: 1px solid #e74c3c;
+    }
+    .btn-delete:hover {
+      background-color: #c0392b;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 24px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    .close {
+      color: #aaa;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .close:hover, .close:focus {
+      color: #333;
+    }
+    .modal-body {
+      margin-bottom: 16px;
+    }
+    .modal-field {
+      margin-bottom: 12px;
+    }
+    .modal-field label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    .modal-field span {
+      display: block;
+      padding: 8px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      min-height: 38px;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      list-style: none;
+      padding: 0;
+    }
+    .pagination li {
+      margin: 0 4px;
+    }
+    .pagination a {
+      padding: 6px 12px;
+      border-radius: 4px;
+      text-decoration: none;
+      color: #333;
+      background-color: white;
+      border: 1px solid #ddd;
+    }
+    .pagination a:hover {
+      background-color: #f5f5f5;
+    }
+    .pagination .active a {
+      background-color: #3498db;
+      color: white;
+      border-color: #3498db;
+    }
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 16px;
+      border-radius: 4px;
+      color: white;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .notification-success {
+      background-color: #2ecc71;
+    }
+    .notification-error {
+      background-color: #e74c3c;
+    }
+    .notification.show {
+      opacity: 1;
+    }
+<!--    分页容器样式-->
+     #paginationControls {
+    text-align: center;
+    margin: 20px 0;
+  }
+  #paginationControls button {
+    display: inline-block;
+    margin: 0 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  #paginationControls button.btn-primary {
+    background-color: #007bff;
+    color: white;
+    border: none;
+  }
+  #paginationControls button.btn-outline {
+    background-color: white;
+    color: #007bff;
+    border: 1px solid #007bff;
+  }
+    #paginationControls {
+  display: flex;
+  justify-content: center; /* 水平居中 */
+  align-items: center;     /* 垂直居中（如果需要） */
+  margin: 20px 0;
+  gap: 8px;                /* 分页按钮间距 */
+}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>医生服务质量评价</h2>
+
+    <div class="toolbar">
+      <div class="search-box">
+        <i class="fa fa-search"></i>
+        <input type="text" id="searchInput" placeholder="搜索医生或患者...">
+      </div>
+      <button id="refreshBtn" class="btn btn-view">
+        <i class="fa fa-refresh mr-1"></i>刷新数据
+      </button>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="reviewsTable">
+        <thead>
+          <tr>
+            <th>评价ID</th>
+            <th>医生姓名</th>
+            <th>患者姓名</th>
+            <th>评分</th>
+            <th>评价内容</th>
+            <th>评价时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 内容将通过JavaScript动态加载 -->
+        </tbody>
+      </table>
+    </div>
+
+<!--    分页容器-->
+    <div id="paginationControls"></div>
+
+  </div>
+
+  <!-- 查看详情模态框 -->
+  <div id="viewModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">评价详情</h3>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label>评价ID</label>
+          <span id="viewId"></span>
+        </div>
+        <div class="modal-field">
+          <label>医生姓名</label>
+          <span id="viewDoctorName"></span>
+        </div>
+        <div class="modal-field">
+          <label>用户名</label>
+          <span id="viewPatientName"></span>
+        </div>
+        <div class="modal-field">
+          <label>评分</label>
+          <span id="viewRating"></span>
+        </div>
+        <div class="modal-field">
+          <label>评价内容</label>
+          <span id="viewContent"></span>
+        </div>
+        <div class="modal-field">
+          <label>评价时间</label>
+          <span id="viewTime"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="closeViewBtn" class="btn btn-view">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通知提示 -->
+  <div id="notification" class="notification"></div>
+
+<!--  <script>-->
+<!--    // DOM元素-->
+<!--    const reviewsTable = document.getElementById('reviewsTable');-->
+<!--    const viewModal = document.getElementById('viewModal');-->
+<!--    const closeViewBtn = document.getElementById('closeViewBtn');-->
+<!--    const closeModal = document.querySelector('.close');-->
+<!--    const searchInput = document.getElementById('searchInput');-->
+<!--    const refreshBtn = document.getElementById('refreshBtn');-->
+<!--    const notification = document.getElementById('notification');-->
+
+<!--let currentPage = 1;-->
+<!--let pageSize = 5;-->
+<!--let totalReviews = 0;-->
+<!--let currentSearch = "";-->
+
+<!--function loadReviews(page = 1, search = '') {-->
+<!--  fetch(`/api/reviews?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(search)}`)-->
+<!--    .then(res => res.json())-->
+<!--    .then(result => {-->
+<!--      if (result.error) {-->
+<!--        showNotification(result.error, 'error');-->
+<!--        return;-->
+<!--      }-->
+
+<!--      totalReviews = result.total;-->
+<!--      currentPage = result.page;-->
+<!--      currentSearch = search;-->
+
+<!--      renderReviewsTable(result.data);-->
+<!--      renderPaginationControls();-->
+<!--    })-->
+<!--    .catch(err => {-->
+<!--      console.error('加载失败:', err);-->
+<!--      showNotification('加载失败', 'error');-->
+<!--    });-->
+<!--}-->
+
+<!--//渲染表格内容-->
+<!--function renderReviewsTable(reviews) {-->
+<!--  const tbody = reviewsTable.querySelector('tbody');-->
+<!--  tbody.innerHTML = '';-->
+
+<!--  reviews.forEach(review => {-->
+<!--    const tr = document.createElement('tr');-->
+<!--    tr.innerHTML = `-->
+<!--      <td>${review.id}</td>-->
+<!--      <td>${review.doctor_name}</td>-->
+<!--      <td>${review.patient_name}</td>-->
+<!--      <td><div class="rating-display">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div></td>-->
+<!--      <td>${review.content.length > 30 ? review.content.substring(0, 30) + '...' : review.content}</td>-->
+<!--      <td>${review.review_time}</td>-->
+<!--      <td class="action-buttons">-->
+<!--        <button class="btn btn-view" onclick="viewReview(${review.id})">查看</button>-->
+<!--        <button class="btn btn-delete" onclick="deleteReview(${review.id})">删除</button>-->
+<!--      </td>-->
+<!--    `;-->
+<!--    tbody.appendChild(tr);-->
+<!--  });-->
+<!--}-->
+
+<!--//智能分页控件-->
+<!--function renderPaginationControls() {-->
+<!--  const totalPages = Math.ceil(totalReviews / pageSize);-->
+<!--  const pagination = document.getElementById('paginationControls');-->
+<!--  pagination.innerHTML = '';-->
+<!--  const pageNeighbors = 2;-->
+
+<!--  const createBtn = (page, label = null) => {-->
+<!--    const btn = document.createElement('button');-->
+<!--    btn.textContent = label || page;-->
+<!--    btn.className = page === currentPage ? 'btn btn-primary' : 'btn btn-outline';-->
+<!--    btn.onclick = () => loadReviews(page, currentSearch);-->
+<!--    btn.style.margin = '0 4px';-->
+<!--    return btn;-->
+<!--  };-->
+
+<!--  // 首页-->
+<!--  if (currentPage > 1) pagination.appendChild(createBtn(1, '«'));-->
+
+<!--  if (currentPage - pageNeighbors > 2) {-->
+<!--    pagination.appendChild(document.createTextNode('...'));-->
+<!--  }-->
+
+<!--  for (let i = Math.max(1, currentPage - pageNeighbors); i <= Math.min(totalPages, currentPage + pageNeighbors); i++) {-->
+<!--    pagination.appendChild(createBtn(i));-->
+<!--  }-->
+
+<!--  if (currentPage + pageNeighbors < totalPages - 1) {-->
+<!--    pagination.appendChild(document.createTextNode('...'));-->
+<!--  }-->
+
+<!--  // 尾页-->
+<!--  if (currentPage < totalPages) pagination.appendChild(createBtn(totalPages, '»'));-->
+<!--}-->
+
+
+
+<!--    // 查看评价详情-->
+<!--    function viewReview(id) {-->
+<!--  fetch(`/api/doctor_reviews/${id}`)-->
+<!--    .then(res => res.json())-->
+<!--    .then(data => {-->
+<!--      if (data.error) {-->
+<!--        alert(data.error);-->
+<!--        return;-->
+<!--      }-->
+<!--      document.getElementById('viewId').textContent = data.id; // ← 加这一行-->
+<!--      document.getElementById('viewDoctorName').textContent = data.doctor_name;-->
+<!--      document.getElementById('viewPatientName').textContent = data.patient_name;-->
+<!--      document.getElementById('viewRating').textContent = '⭐'.repeat(data.rating);-->
+<!--      document.getElementById('viewTime').textContent = data.review_time;-->
+<!--      document.getElementById('viewContent').textContent = data.content;-->
+<!--      document.getElementById('viewModal').style.display = 'block';-->
+<!--    })-->
+<!--    .catch(err => {-->
+<!--      console.error('加载评价失败:', err);-->
+<!--    });-->
+<!--}-->
+
+
+
+<!--    // 删除评价-->
+<!--   window.deleteReview = function(id) {-->
+<!--  if (confirm('确定要删除这条评价吗？')) {-->
+<!--    fetch(`/api/reviews/${id}`, { method: 'DELETE' })-->
+<!--      .then(res => {-->
+<!--        if (!res.ok) throw new Error('删除失败');-->
+<!--        return res.json();-->
+<!--      })-->
+<!--      .then(data => {-->
+<!--        showNotification('评价已删除', 'success');-->
+<!--        loadReviews(currentPage, currentSearch);-->
+<!--      })-->
+<!--      .catch(err => {-->
+<!--        showNotification(err.message || '删除失败', 'error');-->
+<!--      });-->
+<!--  }-->
+<!--}-->
+
+
+<!--    // 关闭模态框-->
+<!--    closeViewBtn.addEventListener('click', () => {-->
+<!--      viewModal.style.display = 'none';-->
+<!--    });-->
+
+<!--    closeModal.addEventListener('click', () => {-->
+<!--      viewModal.style.display = 'none';-->
+<!--    });-->
+
+
+<!--    // 点击模态框外部关闭-->
+<!--    window.addEventListener('click', (event) => {-->
+<!--      if (event.target === viewModal) {-->
+<!--        viewModal.style.display = 'none';-->
+<!--      }-->
+<!--    });-->
+<!--  //搜索功能-->
+<!--    searchInput.addEventListener('input', function(e) {-->
+<!--  const searchTerm = e.target.value.trim();-->
+<!--  loadReviews(1, searchTerm);-->
+<!--});-->
+
+
+<!--    // 刷新数据-->
+<!--  refreshBtn.addEventListener('click', () => {-->
+<!--  loadReviews(1, currentSearch);-->
+<!--});-->
+
+<!--    // 显示通知-->
+<!--    function showNotification(message, type = 'success') {-->
+<!--      notification.textContent = message;-->
+<!--      notification.className = `notification notification-${type} show`;-->
+
+<!--      setTimeout(() => {-->
+<!--        notification.classList.remove('show');-->
+<!--      }, 3000);-->
+<!--    }-->
+
+
+<!--    // 初始化加载数据-->
+<!--    loadReviews();-->
+<!--  </script>-->
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // DOM元素
+  const reviewsTable = document.getElementById('reviewsTable');
+  const viewModal = document.getElementById('viewModal');
+  const closeViewBtn = document.getElementById('closeViewBtn');
+  const closeModal = document.querySelector('.close');
+  const searchInput = document.getElementById('searchInput');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const notification = document.getElementById('notification');
+
+  let currentPage = 1;
+  let pageSize = 5;
+  let totalReviews = 0;
+  let currentSearch = "";
+
+  function loadReviews(page = 1, search = '') {
+    fetch(`/api/reviews?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(search)}`)
+      .then(res => res.json())
+      .then(result => {
+        if (result.error) {
+          showNotification(result.error, 'error');
+          return;
+        }
+
+        totalReviews = result.total;
+        currentPage = result.page;
+        currentSearch = search;
+
+        renderReviewsTable(result.data);
+        renderPaginationControls();
+      })
+      .catch(err => {
+        console.error('加载失败:', err);
+        showNotification('加载失败', 'error');
+      });
+  }
+
+  function renderReviewsTable(reviews) {
+  const tbody = reviewsTable.querySelector('tbody');
+  tbody.innerHTML = '';
+
+  reviews.forEach((review, index) => {
+    const displayId = (currentPage - 1) * pageSize + index + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${displayId}</td>
+      <td>${review.doctor_name}</td>
+      <td>${review.patient_name}</td>
+      <td><div class="rating-display">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div></td>
+      <td>${review.content.length > 30 ? review.content.substring(0, 30) + '...' : review.content}</td>
+      <td>${review.review_time}</td>
+      <td class="action-buttons">
+        <button class="btn btn-view" onclick="viewReview(${review.id})">查看</button>
+        <button class="btn btn-delete" onclick="deleteReview(${review.id})">删除</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+
+  function renderPaginationControls() {
+    const totalPages = Math.ceil(totalReviews / pageSize);
+    const pagination = document.getElementById('paginationControls');
+    pagination.innerHTML = '';
+    const pageNeighbors = 2;
+
+    const createBtn = (page, label = null) => {
+      const btn = document.createElement('button');
+      btn.textContent = label || page;
+      btn.className = page === currentPage ? 'btn btn-primary' : 'btn btn-outline';
+      btn.onclick = () => loadReviews(page, currentSearch);
+      btn.style.margin = '0 4px';
+      return btn;
+    };
+
+    if (currentPage > 1) pagination.appendChild(createBtn(1, '«'));
+    if (currentPage - pageNeighbors > 2) pagination.appendChild(document.createTextNode('...'));
+
+    for (let i = Math.max(1, currentPage - pageNeighbors); i <= Math.min(totalPages, currentPage + pageNeighbors); i++) {
+      pagination.appendChild(createBtn(i));
+    }
+
+    if (currentPage + pageNeighbors < totalPages - 1) pagination.appendChild(document.createTextNode('...'));
+    if (currentPage < totalPages) pagination.appendChild(createBtn(totalPages, '»'));
+  }
+
+  // 绑定刷新按钮
+  refreshBtn.addEventListener('click', () => {
+    loadReviews(1, currentSearch);
+  });
+
+  // 搜索功能
+  searchInput.addEventListener('input', function (e) {
+    const searchTerm = e.target.value.trim();
+    loadReviews(1, searchTerm);
+  });
+
+  // 查看详情
+  window.viewReview = function (id) {
+    fetch(`/api/doctor_reviews/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+        document.getElementById('viewId').textContent = data.id;
+        document.getElementById('viewDoctorName').textContent = data.doctor_name;
+        document.getElementById('viewPatientName').textContent = data.patient_name;
+        document.getElementById('viewRating').textContent = '⭐'.repeat(data.rating);
+        document.getElementById('viewTime').textContent = data.review_time;
+        document.getElementById('viewContent').textContent = data.content;
+        viewModal.style.display = 'block';
+      })
+      .catch(err => {
+        console.error('加载评价失败:', err);
+      });
+  }
+
+  // 删除
+  window.deleteReview = function (id) {
+    if (confirm('确定要删除这条评价吗？')) {
+      fetch(`/api/reviews/${id}`, { method: 'DELETE' })
+        .then(res => {
+          if (!res.ok) throw new Error('删除失败');
+          return res.json();
+        })
+        .then(data => {
+          showNotification('评价已删除', 'success');
+          loadReviews(currentPage, currentSearch);
+        })
+        .catch(err => {
+          showNotification(err.message || '删除失败', 'error');
+        });
+    }
+  }
+
+  // 模态框相关
+  closeViewBtn.addEventListener('click', () => viewModal.style.display = 'none');
+  closeModal.addEventListener('click', () => viewModal.style.display = 'none');
+  window.addEventListener('click', (e) => {
+    if (e.target === viewModal) viewModal.style.display = 'none';
+  });
+
+  // 提示框
+  function showNotification(message, type = 'success') {
+    notification.textContent = message;
+    notification.className = `notification notification-${type} show`;
+    setTimeout(() => {
+      notification.classList.remove('show');
+    }, 3000);
+  }
+
+<!--  //刷新数据提示-->
+  refreshBtn.addEventListener('click', () => {
+  showNotification("已刷新数据");
+  loadReviews(1, currentSearch);
+});
+
+  // 初始化
+  loadReviews();
+});
+</script>
+
+</body>
+</html>

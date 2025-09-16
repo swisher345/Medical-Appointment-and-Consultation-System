@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>科室绩效评估</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+            info: '#64748b',
+          },
+          fontFamily: {
+            inter: ['Inter', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .card-shadow {
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+      }
+      .hover-scale {
+        transition: transform 0.2s ease-in-out;
+      }
+      .hover-scale:hover {
+        transform: scale(1.02);
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-inter text-gray-800">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="text-2xl font-bold text-gray-800">科室绩效评估</h2>
+      <div class="flex space-x-4">
+        <!-- 周期选择 -->
+        <select id="periodSelect" class="bg-white border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50">
+          {% for period in periods %}
+            <option value="{{ period.value }}" {% if period.value == current_period %}selected{% endif %}>{{ period.label }}</option>
+          {% endfor %}
+        </select>
+        <button id="refreshBtn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors">
+          <i class="fa fa-refresh mr-1"></i>刷新数据
+        </button>
+      </div>
+    </div>
+
+    <!-- 总体绩效概览 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div class="bg-white rounded-xl p-6 card-shadow hover-scale">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-700">诊疗效率</h3>
+          <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+            <i class="fa fa-clock-o text-success"></i>
+          </div>
+        </div>
+        <div class="flex items-end justify-between">
+          <div>
+            <p class="text-3xl font-bold text-gray-900">{{ efficiencyData.datasets[0].data[0] }}%</p>
+            <p class="text-sm text-gray-500 mt-1">较上季度
+              <span class="text-success">↑{{ efficiencyData.datasets[0].data[0] - efficiencyData.datasets[0].data[1] }}%</span>
+            </p>
+          </div>
+          <div class="w-24 h-24">
+            <canvas id="efficiencyChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-6 card-shadow hover-scale">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-700">综合评分</h3>
+          <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+            <i class="fa fa-star text-purple-600"></i>
+          </div>
+        </div>
+        <div class="flex items-end justify-between">
+          <div>
+            <p class="text-3xl font-bold text-gray-900">{{ ratingData.datasets[0].data[0] }}/5</p>
+            <p class="text-sm text-gray-500 mt-1">较上季度
+              <span class="text-success">↑{{ ratingData.datasets[0].data[0] - ratingData.datasets[0].data[1] }}</span>
+            </p>
+          </div>
+          <div class="w-24 h-24">
+            <canvas id="ratingChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 科室绩效对比 -->
+    <div class="bg-white rounded-xl p-6 mb-8 card-shadow">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-700">各科室绩效对比</h3>
+        <div class="flex space-x-3">
+          <button id="btnTreatment" class="px-3 py-1 text-sm bg-primary/10 text-primary rounded-full">按诊疗数</button>
+        </div>
+      </div>
+      <div class="h-80">
+        <canvas id="departmentChart"></canvas>
+      </div>
+    </div>
+
+    <!-- 最优医生 -->
+  <div class="bg-white rounded-xl p-6 card-shadow">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg font-semibold text-gray-700">各科室最优医生</h3>
+      <button id="btnDoctorRating" class="px-3 py-1 text-sm bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors">
+        按评分
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for doctor in doctors %}
+      <div class="border border-gray-200 rounded-xl overflow-hidden hover-scale">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="w-16 h-16 rounded-full overflow-hidden mr-4">
+              <img
+                src="https://picsum.photos/seed/{{ doctor.id }}/100/100"
+                alt="医生头像"
+                class="w-full h-full object-cover"
+              />
+            </div>
+
+            <div>
+              <h4 class="font-semibold text-gray-900">{{ doctor.doctor_name }}</h4>
+              <p class="text-sm text-gray-500">{{ doctor.department_name }}</p>
+              <div class="flex items-center mt-1">
+                <div class="text-yellow-400 flex">
+                  {% set rating = doctor.avg_rating %}
+                  {% set full_stars = rating|int %}
+                  {% set half_star = 1 if (rating - full_stars) >= 0.5 else 0 %}
+                  {% set empty_stars = 5 - full_stars - half_star %}
+
+                  {% for _ in range(full_stars) %}
+                    <i class="fa fa-star"></i>
+                  {% endfor %}
+                  {% if half_star %}
+                    <i class="fa fa-star-half-o"></i>
+                  {% endif %}
+                  {% for _ in range(empty_stars) %}
+                    <i class="fa fa-star-o"></i>
+                  {% endfor %}
+                </div>
+                <span class="text-sm text-gray-600 ml-1">{{ "%.2f"|format(rating) }}</span>
+              </div>
+            </div>
+
+            <div class="ml-auto bg-green-100 text-success text-xs px-2 py-1 rounded-full">
+              本季度最佳
+            </div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-gray-100">
+            <div class="grid grid-cols-2 gap-2 text-center">
+              <div>
+                <p class="text-sm font-semibold text-gray-900">诊疗数</p>
+                <p class="text-lg font-bold text-primary">{{ doctor.treatment_count if doctor.treatment_count is defined else 0 }}</p>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-gray-900">效率评分</p>
+                <p class="text-lg font-bold text-purple-600">{{ doctor.efficiency_rating if doctor.efficiency_rating is defined else 0 }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+
+  <script>
+    // 后端传入的数据
+    const efficiencyData = {{ efficiencyData|tojson }};
+    const ratingData = {{ ratingData|tojson }};
+    const departmentData = {{ departmentData|tojson }};
+
+    document.addEventListener('DOMContentLoaded', function () {
+  // 初始化图表
+  const efficiencyChart = new Chart(document.getElementById('efficiencyChart'), {
+    type: 'bar',
+    data: efficiencyData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, max: 100 } }
+    }
+  });
+
+  const ratingChart = new Chart(document.getElementById('ratingChart'), {
+    type: 'bar',
+    data: ratingData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, max: 5 } }
+    }
+  });
+
+  let currentDeptChartType = 'treatment'; // 默认诊疗数
+  const departmentChart = new Chart(document.getElementById('departmentChart'), {
+    type: 'radar',
+    data: departmentData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          angleLines: { display: true },
+          suggestedMin: 0,
+          suggestedMax: 1500 // 调整最大值
+        }
+      }
+    }
+  });
+
+  const periodSelect = document.getElementById('periodSelect');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const btnTreatment = document.getElementById('btnTreatment');
+  const btnRating = document.getElementById('btnRating');
+  const btnDoctorRating = document.getElementById('btnDoctorRating');
+  const btnDoctorSatisfaction = document.getElementById('btnDoctorSatisfaction');
+
+  // 显示通知
+  function showNotification(msg) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed bottom-4 right-4 bg-primary text-white px-4 py-2 rounded-lg shadow-lg z-50';
+    notification.textContent = msg;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      notification.style.transition = 'opacity 0.3s ease-in-out';
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 3000);
+  }
+
+  // 统一刷新所有数据
+  function refreshAllData() {
+    const period = periodSelect.value;
+    fetch(`/department-performance-data?period=${period}&type=${currentDeptChartType}`)
+      .then(res => res.json())
+      .then(data => {
+        // 更新诊疗效率图表数据
+        if (data.efficiencyData) {
+          efficiencyChart.data = data.efficiencyData;
+          efficiencyChart.update();
+        }
+        // 更新综合评分图表数据
+        if (data.ratingData) {
+          ratingChart.data = data.ratingData;
+          ratingChart.update();
+        }
+        // 更新科室绩效对比图表数据
+        if (data.departmentData) {
+          departmentChart.data = data.departmentData;
+          departmentChart.update();
+        }
+        // TODO: 如果接口返回医生数据，可以刷新医生列表
+        // updateDoctors(data.doctors);
+
+        showNotification(`数据已刷新，当前周期：${period}`);
+      })
+      .catch(() => {
+        showNotification('刷新数据失败，请稍后重试');
+      });
+  }
+
+  // 取消周期选择自动刷新数据，选择后仅改变值
+  // periodSelect.addEventListener('change', function () {
+  //   // 不刷新，用户需点击刷新按钮
+  // });
+
+  // 刷新按钮点击触发全部数据刷新
+  refreshBtn.addEventListener('click', refreshAllData);
+
+  // 科室绩效对比切换按钮逻辑，切换后自动刷新对比图表
+  btnTreatment.addEventListener('click', function () {
+    if (currentDeptChartType !== 'treatment') {
+      currentDeptChartType = 'treatment';
+      btnTreatment.classList.add('bg-primary/10', 'text-primary');
+      btnTreatment.classList.remove('bg-gray-100', 'text-gray-600');
+      btnRating.classList.remove('bg-primary/10', 'text-primary');
+      btnRating.classList.add('bg-gray-100', 'text-gray-600');
+      refreshAllData();
+    }
+  });
+
+  btnRating.addEventListener('click', function () {
+    if (currentDeptChartType !== 'rating') {
+      currentDeptChartType = 'rating';
+      btnRating.classList.add('bg-primary/10', 'text-primary');
+      btnRating.classList.remove('bg-gray-100', 'text-gray-600');
+      btnTreatment.classList.remove('bg-primary/10', 'text-primary');
+      btnTreatment.classList.add('bg-gray-100', 'text-gray-600');
+      refreshAllData();
+    }
+  });
+
+  // 最优医生排序切换示例（无数据刷新，保留你的提示）
+  btnDoctorRating.addEventListener('click', function () {
+    btnDoctorRating.classList.add('bg-primary/10', 'text-primary');
+    btnDoctorRating.classList.remove('bg-gray-100', 'text-gray-600');
+    btnDoctorSatisfaction.classList.remove('bg-primary/10', 'text-primary');
+    btnDoctorSatisfaction.classList.add('bg-gray-100', 'text-gray-600');
+    showNotification('按评分排序（示例，无数据刷新）');
+  });
+
+  btnDoctorSatisfaction.addEventListener('click', function () {
+    btnDoctorSatisfaction.classList.add('bg-primary/10', 'text-primary');
+    btnDoctorSatisfaction.classList.remove('bg-gray-100', 'text-gray-600');
+    btnDoctorRating.classList.remove('bg-primary/10', 'text-primary');
+    btnDoctorRating.classList.add('bg-gray-100', 'text-gray-600');
+    showNotification('按满意度排序（示例，无数据刷新）');
+  });
+});
+
+  </script>
+</body>
+</html>
